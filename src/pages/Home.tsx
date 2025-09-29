@@ -12,12 +12,12 @@ const Home = () => {
   const [newPostText, setNewPostText] = useState("");
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 flex max-w-none">
+      <div className="flex-1 flex max-w-none h-full">
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Accueil</h1>
@@ -33,20 +33,30 @@ const Home = () => {
 
           {/* New Post Input */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="flex items-center gap-3 flex-1">
+            <div className="space-y-4">
+              {/* Text Area */}
+              <textarea
+                placeholder="Bonjour moi c'est..."
+                value={newPostText}
+                onChange={(e) => setNewPostText(e.target.value)}
+                className="w-full h-20 resize-none border-0 placeholder-gray-400 text-gray-900 focus:outline-none bg-transparent text-base"
+              />
+
+              {/* Bottom Row */}
+              <div className="flex items-center justify-between">
                 <Button variant="ghost" size="icon" className="text-stragram-primary hover:text-stragram-primary/80">
                   <Image className="w-5 h-5" />
                 </Button>
-                <textarea
-                  placeholder="Bonjour moi c'est..."
-                  value={newPostText}
-                  onChange={(e) => setNewPostText(e.target.value)}
-                  className="flex-1 h-12 resize-none border-0 placeholder-gray-400 text-gray-900 focus:outline-none bg-transparent"
-                />
-                <Button variant="stragram" size="sm" className="px-6">
+
+                <button
+                  className="w-24 h-9 bg-[#EC3558] text-white text-sm font-medium rounded-[11px] hover:bg-[#EC3558]/90 transition-colors"
+                  onClick={() => {
+                    // Handle publish logic here
+                    console.log("Publishing:", newPostText);
+                  }}
+                >
                   Publier
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -135,7 +145,7 @@ const Home = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 p-6 flex-shrink-0">
+        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
           <QuickAdd />
         </div>
       </div>

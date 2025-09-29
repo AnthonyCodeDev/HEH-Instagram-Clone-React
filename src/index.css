@@ -135,3 +135,21 @@ All colors MUST be HSL.
     transition: var(--transition-smooth);
   }
 }
+
+/* Custom Scrollbar Styles */
+/* Largeur de la scrollbar */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+/* Fond de la scrollbar */
+::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+}
+
+/* Partie déplaçable de la scrollbar */
+::-webkit-scrollbar-thumb {
+    background-color: #c0c0c0;
+    border-radius: 10px;
+    border: 3px solid #f4f4f4; /* Ajoute une bordure pour donner un effet en relief */
+}

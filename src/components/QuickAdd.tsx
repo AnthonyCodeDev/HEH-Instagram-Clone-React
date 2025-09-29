@@ -46,34 +46,24 @@ const QuickAdd = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
                 {/* Profile Info */}
-                <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                  <div className="text-white">
-                    <h3 className="font-semibold text-sm">{profile.name}</h3>
-                    <p className="text-xs text-white/80">@{profile.username}</p>
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12 border-2 border-white">
+                      <AvatarImage src={profile.avatar} alt={profile.name} />
+                      <AvatarFallback className="bg-stragram-primary text-white text-sm">
+                        {profile.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-white">
+                      <h3 className="font-semibold text-base">{profile.name}</h3>
+                      <p className="text-sm text-white/90">@{profile.username}</p>
+                    </div>
                   </div>
-
-                  <Avatar className="w-10 h-10 border-2 border-white">
-                    <AvatarImage src={profile.avatar} alt={profile.name} />
-                    <AvatarFallback className="bg-stragram-primary text-white text-xs">
-                      {profile.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
                 </div>
               </div>
             </div>
           </Link>
         ))}
-      </div>
-
-      {/* Search Bar */}
-      <div className="mt-6 pt-4 border-t border-gray-100">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Rechercher dans Stragram"
-            className="w-full h-10 pl-4 pr-4 bg-gray-50 border-0 rounded-xl text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-stragram-primary/20"
-          />
-        </div>
       </div>
     </div>
   );

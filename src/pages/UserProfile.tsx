@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,7 +24,7 @@ const userData = {
     location: "Paris, France",
     photos: [
       "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=400",
-      "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400", 
+      "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400",
       "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400",
       "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
@@ -101,9 +102,9 @@ const userData = {
 const UserProfile = () => {
   const { username } = useParams();
   const [isFollowing, setIsFollowing] = useState(false);
-  
+
   const user = userData[username as keyof typeof userData];
-  
+
   if (!user) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -119,166 +120,158 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      
-      <div className="flex-1 p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Cover Photo */}
-          <div className="relative h-64 rounded-2xl overflow-hidden mb-6">
-            <img 
-              src={user.coverImage} 
-              alt="Cover" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            
-            {/* Profile Picture */}
-            <div className="absolute bottom-6 left-6">
-              <Avatar className="w-32 h-32 border-4 border-white">
-                <AvatarImage 
-                  src={user.avatar} 
-                  alt={user.name} 
-                />
-                <AvatarFallback className="bg-stragram-primary text-white text-2xl">
-                  {user.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+
+      <div className="flex-1 flex max-w-none h-full">
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            {/* Cover Photo */}
+            <div className="relative h-80 rounded-2xl overflow-hidden mb-6">
+              <img
+                src={user.coverImage}
+                alt="Cover"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {/* Profile Picture */}
+              <div className="absolute bottom-6 left-6">
+                <Avatar className="w-32 h-32 border-4 border-white">
+                  <AvatarImage
+                    src={user.avatar}
+                    alt={user.name}
+                  />
+                  <AvatarFallback className="bg-stragram-primary text-white text-2xl">
+                    {user.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+              </div>
             </div>
-            
-            {/* Action Button */}
-            <div className="absolute bottom-6 right-6">
-              {username === "lucashergz20" ? (
-                <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Éditer le profil
-                </Button>
-              ) : (
-                <Button 
-                  variant={isFollowing ? "outline" : "stragram"} 
-                  onClick={() => setIsFollowing(!isFollowing)}
-                  className={isFollowing ? "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30" : ""}
-                >
-                  {isFollowing ? "Suivi" : "Suivre"}
-                </Button>
-              )}
-            </div>
-          </div>
 
-          {/* Profile Info */}
-          <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-                  {user.verified && (
-                    <Badge variant="destructive" className="bg-stragram-primary">
-                      ✓
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-gray-600 mb-2">@{user.username}</p>
-                <p className="text-gray-700 mb-4">{user.bio}</p>
-                
-                <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>Rejoint en {user.joinDate}</span>
+            {/* Profile Details */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                    {user.verified && (
+                      <Badge variant="destructive" className="bg-stragram-primary">
+                        ✓
+                      </Badge>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{user.location}</span>
+                  <p className="text-gray-600 mb-4">@{user.username}</p>
+                  <p className="text-gray-800 mb-4 leading-relaxed">{user.bio}</p>
+
+                  <div className="flex items-center gap-1 text-gray-600 mb-4">
+                    <span className="font-semibold text-gray-900">{user.stats.followers}</span>
+                    <span>abonnés</span>
+                    <span className="mx-2">•</span>
+                    <span className="font-semibold text-gray-900">{user.stats.following}</span>
+                    <span>abonnements</span>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-6 text-sm font-medium mb-4">
-                  <span><strong>{user.stats.posts} posts</strong></span>
-                  <span><strong>{user.stats.likes} likes</strong></span>
-                  <span><strong>{user.stats.followers} abonnés</strong> • <strong>{user.stats.following} abonnements</strong></span>
-                </div>
-
-                {/* Social Links - only for Lucas */}
-                {username === "lucashergz20" && (
-                  <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center text-white text-xs">
+                  {/* Social Links */}
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2 h-8 px-3">
+                      <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center text-white text-xs font-bold">
                         T
                       </div>
-                      TikTok
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2 text-red-600 border-red-200">
-                      <div className="w-4 h-4 bg-red-600 rounded-sm flex items-center justify-center text-white text-xs">
-                        ▶
-                      </div>
-                      Youtube
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-black rounded-sm flex items-center justify-center text-white text-xs">
-                        X
-                      </div>
-                      X (Twitter)
+                      <span className="text-xs">TikTok</span>
                     </Button>
                   </div>
+                </div>
+              </div>
+
+              {/* Follow Section */}
+              <div className="border-t pt-4">
+                <p className="text-sm text-gray-600 mb-3 uppercase tracking-wide font-medium">ABONNEMENT</p>
+                {username === "lucashergz20" ? (
+                  <Button variant="outline" className="w-full h-12 text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-[28.5px]">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Éditer le profil
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setIsFollowing(!isFollowing)}
+                    className={`w-full h-12 font-medium transition-all duration-200 rounded-[28.5px] ${isFollowing
+                      ? "bg-[#EC3558] text-white hover:bg-[#EC3558]/90"
+                      : "border-2 border-stragram-primary text-stragram-primary bg-transparent hover:bg-stragram-primary hover:text-white"
+                      }`}
+                  >
+                    {isFollowing ? "Désabonner" : "S'abonner"}
+                  </Button>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Content Tabs */}
-          <div className="bg-white rounded-2xl shadow-card p-6">
-            <Tabs defaultValue="photos" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="photos" className="flex items-center gap-2">
-                  <Camera className="w-4 h-4" />
-                  {user.photos.length} PHOTOS
-                </TabsTrigger>
-                <TabsTrigger value="videos" className="flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4" />
-                  {user.videos.length} VIDÉOS
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="photos">
-                <div className="grid grid-cols-3 gap-2">
-                  {user.photos.map((photo, index) => (
-                    <div 
-                      key={index}
-                      className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-smooth cursor-pointer"
-                    >
-                      <img 
-                        src={photo} 
-                        alt={`Photo ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="videos">
-                <div className="grid grid-cols-3 gap-2">
-                  {user.videos.map((video, index) => (
-                    <div 
-                      key={index}
-                      className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-smooth cursor-pointer relative"
-                    >
-                      <img 
-                        src={video} 
-                        alt={`Video ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-white">
-                          ▶
+            {/* Content Tabs */}
+            <div className="bg-white rounded-2xl shadow-sm">
+              <Tabs defaultValue="photos" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b border-gray-200">
+                  <TabsTrigger
+                    value="photos"
+                    className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
+                  >
+                    {user.photos.length} PHOTOS
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="videos"
+                    className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
+                  >
+                    {user.videos.length} VIDÉOS
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="photos" className="p-0 mt-0">
+                  <div className="grid grid-cols-3 gap-1">
+                    {user.photos.map((photo, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        <img
+                          src={photo}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="videos" className="p-0 mt-0">
+                  <div className="grid grid-cols-3 gap-1">
+                    {user.videos.map((video, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
+                      >
+                        <img
+                          src={video}
+                          alt={`Video ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center text-white">
+                            ▶
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+          <QuickAdd />
         </div>
       </div>
     </div>

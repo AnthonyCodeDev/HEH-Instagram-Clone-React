@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, UserPlus, Camera, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -149,134 +150,143 @@ const Notifications = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 p-6">
-        <div className="w-full">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-              {unreadCount > 0 && (
-                <p className="text-sm text-gray-600 mt-1">
-                  {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''} notification{unreadCount > 1 ? 's' : ''}
-                </p>
-              )}
-            </div>
+      <div className="flex-1 flex max-w-none h-full">
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="w-full">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+                {unreadCount > 0 && (
+                  <div className="bg-stragram-primary text-white text-sm font-medium px-3 py-1 rounded-full">
+                    {unreadCount}
+                  </div>
+                )}
+              </div>
 
-            <div className="flex items-center gap-3">
-              {unreadCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={markAllAsRead}
-                >
-                  Tout marquer comme lu
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="text-stragram-primary hover:text-stragram-primary/80 hover:bg-stragram-primary/10"
+                  >
+                    Tout marquer comme lu
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                  <Settings className="w-5 h-5" />
                 </Button>
-              )}
-              <Button variant="ghost" size="icon">
-                <Settings className="w-5 h-5" />
-              </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Notifications List */}
-          <div className="space-y-1">
-            {notificationList.map((notification) => (
-              <div
-                key={notification.id}
-                className={`bg-white rounded-xl p-4 transition-smooth hover:bg-gray-50 cursor-pointer ${!notification.read ? 'shadow-sm' : ''
-                  }`}
-                onClick={() => markAsRead(notification.id)}
-              >
-                <div className="flex items-start gap-4">
-                  {/* User Avatar */}
-                  <Link to={`/user/${notification.user.username}`} className="relative">
-                    <Avatar className="w-12 h-12 hover:opacity-80 transition-smooth">
-                      <AvatarImage src={notification.user.avatar} alt={notification.user.name} />
-                      <AvatarFallback>
-                        {notification.user.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
+            {/* Notifications List */}
+            <div className="space-y-2">
+              {notificationList.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`group relative bg-white rounded-2xl p-5 transition-all duration-200 hover:bg-gray-50 cursor-pointer border border-gray-100 ${!notification.read ? 'border-stragram-primary/20 bg-stragram-primary/5' : ''
+                    }`}
+                  onClick={() => markAsRead(notification.id)}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* User Avatar */}
+                    <Link to={`/user/${notification.user.username}`} className="relative flex-shrink-0">
+                      <Avatar className="w-14 h-14 hover:scale-105 transition-transform duration-200 ring-2 ring-white shadow-sm">
+                        <AvatarImage src={notification.user.avatar} alt={notification.user.name} />
+                        <AvatarFallback className="bg-gray-100 text-gray-600 font-semibold">
+                          {notification.user.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    {/* Notification Icon */}
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                  </Link>
+                      {/* Notification Icon */}
+                      <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                    </Link>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Link
-                            to={`/user/${notification.user.username}`}
-                            className="font-semibold text-gray-900 hover:text-stragram-primary transition-smooth"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {notification.user.name}
-                          </Link>
-                          {notification.user.verified && (
-                            <Badge variant="destructive" className="w-4 h-4 p-0 bg-stragram-primary">
-                              ✓
-                            </Badge>
-                          )}
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-stragram-primary rounded-full"></div>
-                          )}
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Link
+                              to={`/user/${notification.user.username}`}
+                              className="font-semibold text-gray-900 hover:text-stragram-primary transition-colors text-base"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {notification.user.name}
+                            </Link>
+                            {notification.user.verified && (
+                              <Badge variant="destructive" className="w-4 h-4 p-0 bg-stragram-primary">
+                                ✓
+                              </Badge>
+                            )}
+                            <span className="text-gray-500 text-sm">•</span>
+                            <span className="text-gray-500 text-sm">
+                              {notification.timestamp}
+                            </span>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-stragram-primary rounded-full ml-auto"></div>
+                            )}
+                          </div>
+
+                          <p className="text-gray-700 leading-relaxed">
+                            {notification.content}
+                          </p>
                         </div>
 
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          {notification.content}
-                        </p>
-
-                        <p className="text-xs text-gray-500 mt-2">
-                          {notification.timestamp}
-                        </p>
+                        {/* Post Thumbnail */}
+                        {notification.postImage && (
+                          <div className="ml-4 flex-shrink-0">
+                            <img
+                              src={notification.postImage}
+                              alt="Post"
+                              className="w-16 h-16 rounded-xl object-cover shadow-sm hover:shadow-md transition-shadow"
+                            />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Post Thumbnail */}
-                      {notification.postImage && (
-                        <div className="ml-4 flex-shrink-0">
-                          <img
-                            src={notification.postImage}
-                            alt="Post"
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
+                      {/* Action Buttons */}
+                      {notification.type === 'follow' && (
+                        <div className="mt-4">
+                          <Button variant="stragram" size="sm" className="h-9 px-6 text-sm font-medium">
+                            Suivre en retour
+                          </Button>
                         </div>
                       )}
                     </div>
-
-                    {/* Action Buttons */}
-                    {notification.type === 'follow' && (
-                      <div className="mt-3">
-                        <Button variant="stragram" size="sm" className="h-8 px-4 text-xs">
-                          Suivre en retour
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {notificationList.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Aucune notification
-              </h3>
-              <p className="text-gray-600">
-                Vos notifications apparaîtront ici lorsque quelqu'un interagira avec votre contenu.
-              </p>
+              ))}
             </div>
-          )}
+
+            {/* Empty State */}
+            {notificationList.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Aucune notification
+                </h3>
+                <p className="text-gray-600">
+                  Vos notifications apparaîtront ici lorsque quelqu'un interagira avec votre contenu.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+          <QuickAdd />
         </div>
       </div>
     </div>
