@@ -135,15 +135,15 @@ const Notifications = () => {
   const unreadCount = notificationList.filter(n => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotificationList(prev => 
-      prev.map(notif => 
+    setNotificationList(prev =>
+      prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
   };
 
   const markAllAsRead = () => {
-    setNotificationList(prev => 
+    setNotificationList(prev =>
       prev.map(notif => ({ ...notif, read: true }))
     );
   };
@@ -151,9 +151,9 @@ const Notifications = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex-1 p-6">
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -164,11 +164,11 @@ const Notifications = () => {
                 </p>
               )}
             </div>
-            
+
             <div className="flex items-center gap-3">
               {unreadCount > 0 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={markAllAsRead}
                 >
@@ -186,9 +186,8 @@ const Notifications = () => {
             {notificationList.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-white rounded-xl p-4 transition-smooth hover:bg-gray-50 cursor-pointer ${
-                  !notification.read ? 'shadow-sm' : ''
-                }`}
+                className={`bg-white rounded-xl p-4 transition-smooth hover:bg-gray-50 cursor-pointer ${!notification.read ? 'shadow-sm' : ''
+                  }`}
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex items-start gap-4">
@@ -200,7 +199,7 @@ const Notifications = () => {
                         {notification.user.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    
+
                     {/* Notification Icon */}
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
                       {getNotificationIcon(notification.type)}
@@ -212,7 +211,7 @@ const Notifications = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <Link 
+                          <Link
                             to={`/user/${notification.user.username}`}
                             className="font-semibold text-gray-900 hover:text-stragram-primary transition-smooth"
                             onClick={(e) => e.stopPropagation()}
@@ -228,11 +227,11 @@ const Notifications = () => {
                             <div className="w-2 h-2 bg-stragram-primary rounded-full"></div>
                           )}
                         </div>
-                        
+
                         <p className="text-gray-700 text-sm leading-relaxed">
                           {notification.content}
                         </p>
-                        
+
                         <p className="text-xs text-gray-500 mt-2">
                           {notification.timestamp}
                         </p>

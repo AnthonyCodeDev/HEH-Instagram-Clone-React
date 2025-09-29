@@ -29,55 +29,42 @@ const profiles = [
 
 const QuickAdd = () => {
   return (
-    <div className="w-80 bg-white rounded-2xl shadow-card p-6">
+    <div className="w-full bg-white rounded-2xl shadow-card p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Ajout Rapide</h2>
-      
+
       <div className="space-y-4">
         {profiles.map((profile) => (
           <Link key={profile.id} to={`/user/${profile.username}`} className="block">
-            <div className="relative hover:scale-105 transition-smooth cursor-pointer">
+            <div className="relative hover:-translate-y-0.5 transition-transform duration-200 cursor-pointer">
               {/* Cover Image */}
-            <div className="h-24 rounded-xl overflow-hidden relative">
-              <img 
-                src={profile.coverImage} 
-                alt={`${profile.name} cover`}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              
-              {/* Profile Info */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                <div className="text-white">
-                  <h3 className="font-semibold text-sm">{profile.name}</h3>
-                  <p className="text-xs text-white/80">@{profile.username}</p>
+              <div className="h-32 rounded-xl overflow-hidden relative">
+                <img
+                  src={profile.coverImage}
+                  alt={`${profile.name} cover`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+
+                {/* Profile Info */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                  <div className="text-white">
+                    <h3 className="font-semibold text-sm">{profile.name}</h3>
+                    <p className="text-xs text-white/80">@{profile.username}</p>
+                  </div>
+
+                  <Avatar className="w-10 h-10 border-2 border-white">
+                    <AvatarImage src={profile.avatar} alt={profile.name} />
+                    <AvatarFallback className="bg-stragram-primary text-white text-xs">
+                      {profile.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-                
-                <Avatar className="w-10 h-10 border-2 border-white">
-                  <AvatarImage src={profile.avatar} alt={profile.name} />
-                  <AvatarFallback className="bg-stragram-primary text-white text-xs">
-                    {profile.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
               </div>
             </div>
-            
-            {/* Follow Button */}
-            <Button 
-              variant="stragram" 
-              size="sm" 
-              className="absolute -bottom-2 right-3 h-8 px-4 text-xs z-10"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              Suivre
-            </Button>
-          </div>
-        </Link>
+          </Link>
         ))}
       </div>
-      
+
       {/* Search Bar */}
       <div className="mt-6 pt-4 border-t border-gray-100">
         <div className="relative">

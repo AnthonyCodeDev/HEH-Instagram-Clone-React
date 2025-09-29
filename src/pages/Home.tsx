@@ -14,14 +14,14 @@ const Home = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      
-      <div className="flex-1 flex">
+
+      <div className="flex-1 flex max-w-none">
         {/* Main Content */}
-        <div className="flex-1 p-6 max-w-2xl mx-auto">
+        <div className="flex-1 p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Accueil</h1>
-            
+
             <div className="relative w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -32,7 +32,7 @@ const Home = () => {
           </div>
 
           {/* New Post Input */}
-          <div className="bg-white rounded-none border-0 p-6 mb-8 shadow-none">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="flex items-center gap-3 flex-1">
                 <Button variant="ghost" size="icon" className="text-stragram-primary hover:text-stragram-primary/80">
@@ -44,7 +44,7 @@ const Home = () => {
                   onChange={(e) => setNewPostText(e.target.value)}
                   className="flex-1 h-12 resize-none border-0 placeholder-gray-400 text-gray-900 focus:outline-none bg-transparent"
                 />
-                <Button variant="stragram" size="sm" className="rounded-full px-6">
+                <Button variant="stragram" size="sm" className="px-6">
                   Publier
                 </Button>
               </div>
@@ -52,13 +52,13 @@ const Home = () => {
           </div>
 
           {/* Main Post */}
-          <div className="bg-white rounded-none shadow-none border-0">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             {/* Post Header */}
             <div className="flex items-start gap-3 p-6 pb-4">
               <Avatar className="w-12 h-12">
-                <AvatarImage 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" 
-                  alt="Lucas Hergz" 
+                <AvatarImage
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
+                  alt="Lucas Hergz"
                 />
                 <AvatarFallback>LH</AvatarFallback>
               </Avatar>
@@ -87,11 +87,11 @@ const Home = () => {
                     Rejoignez-moi sur <span className="text-stragram-primary">stragram.fr/johndoe</span>
                   </p>
                 </div>
-                
+
                 <div className="rounded-xl overflow-hidden">
-                  <img 
-                    src={sunsetBeach} 
-                    alt="Post content" 
+                  <img
+                    src={sunsetBeach}
+                    alt="Post content"
                     className="w-full h-auto object-cover"
                   />
                 </div>
@@ -104,7 +104,7 @@ const Home = () => {
                 <Heart className="w-5 h-5 text-gray-400" />
                 <span className="text-gray-500 text-sm">256 likes</span>
               </div>
-              
+
               <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
                 <Bookmark className="w-5 h-5" />
               </Button>
@@ -114,9 +114,9 @@ const Home = () => {
             <div className="px-6 pb-6 pt-2">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage 
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" 
-                    alt="Lucas Hergz" 
+                  <AvatarImage
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
+                    alt="Lucas Hergz"
                   />
                   <AvatarFallback>LH</AvatarFallback>
                 </Avatar>
@@ -135,7 +135,7 @@ const Home = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 p-6">
+        <div className="w-96 p-6 flex-shrink-0">
           <QuickAdd />
         </div>
       </div>

@@ -43,9 +43,7 @@ All colors MUST be HSL.
     --stragram-secondary: 330 81% 67%;
     --stragram-accent: 24 95% 53%;
     
-    /* Gradients */
-    --gradient-stragram: linear-gradient(135deg, hsl(var(--stragram-primary)), hsl(var(--stragram-secondary)), hsl(var(--stragram-accent)));
-    --gradient-subtle: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
+    /* Removed gradients for more professional look */
     
     /* Shadows */
     --shadow-stragram: 0 10px 30px -10px hsl(var(--stragram-primary) / 0.3);
@@ -121,12 +119,8 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  .gradient-stragram {
-    background: var(--gradient-stragram);
-  }
-  
-  .gradient-subtle {
-    background: var(--gradient-subtle);
+  .bg-stragram {
+    background: hsl(var(--stragram-primary));
   }
   
   .shadow-stragram {
