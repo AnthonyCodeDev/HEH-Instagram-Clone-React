@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/home" element={<Home />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/user/:username" element={<UserProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

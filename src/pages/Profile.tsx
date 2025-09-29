@@ -269,9 +269,6 @@ const Profile = () => {
                     >
                       {profileData.name}
                     </h1>
-                    <Badge variant="destructive" className="bg-stragram-primary">
-                      ✓
-                    </Badge>
                   </div>
                   <p className="text-gray-600 mb-2">@{profileData.username}</p>
                   <p className="text-gray-700 mb-4">{profileData.bio}</p>
