@@ -254,13 +254,6 @@ const Notifications = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      {notification.type === 'follow' && (
-                        <div className="mt-4">
-                          <Button variant="stragram" size="sm" className="h-9 px-6 text-sm font-medium">
-                            Suivre en retour
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
