@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Search, Heart, Bookmark, Image } from "lucide-react";
+import { Heart, Bookmark, Image } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,15 +19,20 @@ const Home = () => {
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Accueil</h1>
+            <h1
+              className="font-medium capitalize"
+              style={{
+                fontFamily: '"SF Pro", sans-serif',
+                fontSize: '19px',
+                fontWeight: 590,
+                color: '#252525',
+                textAlign: 'center',
+                textTransform: 'capitalize'
+              }}
+            >
+              Accueil
+            </h1>
 
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Rechercher dans Stragram"
-                className="pl-10 h-10 bg-white rounded-full border-gray-200"
-              />
-            </div>
           </div>
 
           {/* New Post Input */}
@@ -75,9 +79,6 @@ const Home = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-gray-900">Lucas Hergz</h3>
-                  <Badge variant="destructive" className="w-4 h-4 p-0 bg-stragram-primary rounded-full flex items-center justify-center">
-                    <span className="text-xs">✓</span>
-                  </Badge>
                 </div>
                 <p className="text-sm text-gray-500">@lucashergz20</p>
               </div>
@@ -133,9 +134,6 @@ const Home = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-gray-900 text-sm">Lucas Hergz</span>
-                    <Badge variant="destructive" className="w-3 h-3 p-0 bg-stragram-primary rounded-full flex items-center justify-center">
-                      <span className="text-xs">✓</span>
-                    </Badge>
                   </div>
                   <p className="text-xs text-gray-500">@lucashergz20</p>
                 </div>

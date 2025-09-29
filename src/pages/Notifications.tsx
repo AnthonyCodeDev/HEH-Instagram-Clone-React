@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, UserPlus, Camera, Settings } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Camera, Settings, Trash2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NotificationItem {
   id: string;
@@ -14,7 +20,6 @@ interface NotificationItem {
     name: string;
     username: string;
     avatar: string;
-    verified?: boolean;
   };
   content?: string;
   postImage?: string;
@@ -68,7 +73,6 @@ const notifications: NotificationItem[] = [
       name: 'Alex Martin',
       username: 'alexmartin',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      verified: true,
     },
     content: 'et 12 autres personnes ont aimé votre publication',
     postImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
@@ -149,6 +153,10 @@ const Notifications = () => {
     );
   };
 
+  const deleteAllNotifications = () => {
+    setNotificationList([]);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
@@ -159,29 +167,47 @@ const Notifications = () => {
           <div className="w-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-                {unreadCount > 0 && (
-                  <div className="bg-stragram-primary text-white text-sm font-medium px-3 py-1 rounded-full">
-                    {unreadCount}
-                  </div>
-                )}
-              </div>
+              <h1
+                className="font-medium capitalize"
+                style={{
+                  fontFamily: '"SF Pro", sans-serif',
+                  fontSize: '19px',
+                  fontWeight: 590,
+                  color: '#252525',
+                  textAlign: 'center',
+                  textTransform: 'capitalize'
+                }}
+              >
+                Notifications
+              </h1>
 
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="default"
                     onClick={markAllAsRead}
-                    className="text-stragram-primary hover:text-stragram-primary/80 hover:bg-stragram-primary/10"
+                    className="text-stragram-primary hover:text-stragram-primary/80 hover:bg-stragram-primary/10 px-4 py-2"
                   >
                     Tout marquer comme lu
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                  <Settings className="w-5 h-5" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                      <Settings className="w-6 h-6" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={deleteAllNotifications}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Supprimer toutes les notifications
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -222,11 +248,6 @@ const Notifications = () => {
                             >
                               {notification.user.name}
                             </Link>
-                            {notification.user.verified && (
-                              <Badge variant="destructive" className="w-4 h-4 p-0 bg-stragram-primary">
-                                ✓
-                              </Badge>
-                            )}
                             <span className="text-gray-500 text-sm">•</span>
                             <span className="text-gray-500 text-sm">
                               {notification.timestamp}
