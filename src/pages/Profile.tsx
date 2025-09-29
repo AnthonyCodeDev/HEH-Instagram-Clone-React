@@ -86,76 +86,84 @@ const Profile = () => {
                       Éditer le profil
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle className="text-xl font-bold">Éditer le profil</DialogTitle>
-                    </DialogHeader>
+                  <DialogContent className="sm:max-w-[450px] max-h-[85vh] flex flex-col p-0" hideClose>
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-6 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-900">Éditer le profil</h2>
+                      <button
+                        onClick={() => setIsEditModalOpen(false)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
 
-                    <div className="space-y-6 py-4 overflow-y-auto flex-1 pr-2">
-                      {/* Name */}
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-medium">
-                          Nom complet
-                        </Label>
-                        <Input
-                          id="name"
-                          value={profileData.name}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                          className="h-12 rounded-xl"
-                        />
+                    {/* Content */}
+                    <div className="px-6 pb-6 space-y-5 overflow-y-auto flex-1">
+                      {/* Profile Picture */}
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" alt={profileData.name} />
+                          <AvatarFallback className="bg-stragram-primary text-white text-lg">
+                            {profileData.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Button variant="outline" size="sm" className="text-stragram-primary border-stragram-primary hover:bg-stragram-primary/5">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Changer
+                        </Button>
                       </div>
 
-                      {/* Username */}
-                      <div className="space-y-2">
-                        <Label htmlFor="username" className="text-sm font-medium">
-                          Nom d'utilisateur
-                        </Label>
-                        <Input
-                          id="username"
-                          value={profileData.username}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-                          className="h-12 rounded-xl"
-                          placeholder="@"
-                        />
-                      </div>
+                      {/* Form Fields */}
+                      <div className="space-y-4">
+                        <div>
+                          <Input
+                            value={profileData.name}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="Nom complet"
+                            className="h-11 border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
+                          />
+                        </div>
 
-                      {/* Location */}
-                      <div className="space-y-2">
-                        <Label htmlFor="location" className="text-sm font-medium">
-                          Localisation
-                        </Label>
-                        <Input
-                          id="location"
-                          value={profileData.location}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
-                          className="h-12 rounded-xl"
-                          placeholder="Ville, Pays"
-                        />
-                      </div>
+                        <div>
+                          <Input
+                            value={profileData.username}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                            placeholder="Nom d'utilisateur"
+                            className="h-11 border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
+                          />
+                        </div>
 
-                      {/* Bio */}
-                      <div className="space-y-2">
-                        <Label htmlFor="bio" className="text-sm font-medium">
-                          Bio
-                        </Label>
-                        <textarea
-                          id="bio"
-                          value={profileData.bio}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-                          className="w-full h-20 px-4 py-3 rounded-xl border border-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-stragram-primary/20"
-                          placeholder="Parlez de vous..."
-                        />
+                        <div>
+                          <textarea
+                            value={profileData.bio}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                            placeholder="Bio"
+                            className="w-full h-20 px-3 py-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:border-stragram-primary focus:ring-2 focus:ring-stragram-primary/20 text-sm"
+                          />
+                        </div>
+
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            value={profileData.location}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
+                            placeholder="Localisation"
+                            className="h-11 pl-10 border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
+                          />
+                        </div>
                       </div>
 
                       {/* Social Links */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-medium">Réseaux sociaux</Label>
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Réseaux sociaux</p>
 
-                        <div className="space-y-3">
-                          {/* TikTok */}
+                        <div className="space-y-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 flex items-center justify-center">
-                              <svg width="24" height="23" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                              <svg width="18" height="18" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="0.217407" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
                                 <path d="M10.296 10.0573V9.51623C10.1157 9.47115 9.93534 9.47119 9.75499 9.47119C7.45547 9.47119 5.60684 11.3198 5.60684 13.6193C5.60684 15.017 6.32826 16.2795 7.36529 17.0009L7.32021 16.9558C6.64388 16.2344 6.28317 15.2425 6.28317 14.2055C6.28317 11.906 8.08671 10.1024 10.296 10.0573Z" fill="#25F4EE" />
                                 <path d="M10.3792 16.1046C11.4162 16.1046 12.2278 15.293 12.2729 14.256V5.23825H13.8961C13.851 5.0579 13.851 4.87754 13.851 4.6521H11.5966V13.6698C11.5515 14.6618 10.7399 15.4733 9.70286 15.4733C9.38724 15.4733 9.07162 15.3832 8.84618 15.2479C9.20688 15.7439 9.74795 16.1046 10.3792 16.1046ZM17.0071 8.30427V7.76321C16.3759 7.76321 15.7897 7.58285 15.2937 7.26723C15.7446 7.76321 16.3308 8.16901 17.0071 8.30427Z" fill="#25F4EE" />
@@ -170,15 +178,14 @@ const Profile = () => {
                                 ...prev,
                                 socialLinks: { ...prev.socialLinks, tiktok: e.target.value }
                               }))}
-                              placeholder="@votre_tiktok"
-                              className="h-10 rounded-lg"
+                              placeholder="TikTok"
+                              className="h-9 text-sm border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
                             />
                           </div>
 
-                          {/* YouTube */}
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 flex items-center justify-center">
-                              <svg width="24" height="23" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                              <svg width="18" height="18" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="0.69565" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="white" />
                                 <g clipPath="url(#clip0_11_27)">
                                   <g clipPath="url(#clip1_11_27)">
@@ -202,15 +209,14 @@ const Profile = () => {
                                 ...prev,
                                 socialLinks: { ...prev.socialLinks, youtube: e.target.value }
                               }))}
-                              placeholder="Nom de votre chaîne"
-                              className="h-10 rounded-lg"
+                              placeholder="YouTube"
+                              className="h-9 text-sm border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
                             />
                           </div>
 
-                          {/* Twitter/X */}
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 flex items-center justify-center">
-                              <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                              <svg width="18" height="18" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="0.17392" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
                                 <path d="M14.6768 6.17383H16.3096L12.7246 10.6941L16.9131 16.826H13.6262L11.0528 13.0997L8.10664 16.826H6.47385L10.2719 11.9913L6.26088 6.17383H9.62939L11.9543 9.57781L14.6768 6.17383ZM14.1054 15.7647H15.0105L9.15376 7.19581H8.18118L14.1054 15.7647Z" fill="white" />
                               </svg>
@@ -221,27 +227,26 @@ const Profile = () => {
                                 ...prev,
                                 socialLinks: { ...prev.socialLinks, twitter: e.target.value }
                               }))}
-                              placeholder="@votre_twitter"
-                              className="h-10 rounded-lg"
+                              placeholder="Twitter"
+                              className="h-9 text-sm border-gray-200 focus:border-stragram-primary focus:ring-stragram-primary/20"
                             />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t border-gray-200 flex-shrink-0">
+                    {/* Footer */}
+                    <div className="flex gap-3 p-6 pt-4 border-t border-gray-100">
                       <Button
                         variant="outline"
                         onClick={() => setIsEditModalOpen(false)}
-                        className="flex-1"
+                        className="flex-1 h-11"
                       >
                         Annuler
                       </Button>
                       <Button
-                        variant="stragram"
                         onClick={handleSaveProfile}
-                        className="flex-1"
+                        className="flex-1 h-11 bg-stragram-primary hover:bg-stragram-primary/90"
                       >
                         Enregistrer
                       </Button>
