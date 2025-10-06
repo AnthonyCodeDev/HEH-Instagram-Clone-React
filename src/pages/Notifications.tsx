@@ -265,11 +265,16 @@ const Notifications = () => {
                         {/* Post Thumbnail */}
                         {notification.postImage && (
                           <div className="ml-4 flex-shrink-0">
-                            <img
-                              src={notification.postImage}
-                              alt="Post"
-                              className="w-16 h-16 rounded-xl object-cover shadow-sm hover:shadow-md transition-shadow"
-                            />
+                            <Link 
+                              to={`/p/${notification.user.username}-photo-${notification.id}`} 
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <img
+                                src={notification.postImage}
+                                alt="Post"
+                                className="w-16 h-16 rounded-xl object-cover shadow-sm hover:shadow-md transition-shadow"
+                              />
+                            </Link>
                           </div>
                         )}
                       </div>
