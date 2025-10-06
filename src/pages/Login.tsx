@@ -20,9 +20,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Branding per spec */}
-      <div className="flex-1 flex flex-col items-center justify-center text-white"
+      <div className="flex-1 flex flex-col items-center justify-center text-white p-8 md:p-0"
         style={{ background: "linear-gradient(216deg, #FF482B 1.1%, #C813AA 115.96%)" }}>
         {/* Logo icon */}
         <div className="mb-4">
@@ -48,12 +48,12 @@ const Login = () => {
         {/* Subtitle */}
         <p className="text-white text-[20px] leading-6 tracking-[-0.02em] mb-10">La plateforme de discussion pour les jeunes.</p>
 
-        {/* Illustration block */}
-        <img src="/photo-login.svg" alt="Illustration" className="w-[490.08px] h-[475px] object-contain" />
+        {/* Illustration block (cachée sur petits écrans) */}
+        <img src="/photo-login.svg" alt="Illustration" className="hidden md:block w-full max-w-[490px] h-auto object-contain" />
       </div>
 
       {/* Right side - Login form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-white">
         <Card className="w-full max-w-md p-8 shadow-card">
           <div className="mb-8">
             <h2 className="text-[21.3px] leading-[26px] font-semibold tracking-[-0.035em] text-gray-900">Connexion</h2>

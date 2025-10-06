@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
@@ -97,6 +98,7 @@ const userData = {
 
 const UserProfile = () => {
   const { username } = useParams();
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
 
   const user = userData[username as keyof typeof userData];
@@ -250,6 +252,7 @@ const UserProfile = () => {
                       <div
                         key={index}
                         className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                        onClick={() => setPreviewImage(photo)}
                       >
                         <img
                           src={photo}
@@ -259,6 +262,13 @@ const UserProfile = () => {
                       </div>
                     ))}
                   </div>
+                  <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
+                    <DialogContent variant="bare">
+                      {previewImage && (
+                        <img src={previewImage} alt="Preview" className="max-h-[85vh] w-auto object-contain" />
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </TabsContent>
 
                 <TabsContent value="videos" className="p-0 mt-0">

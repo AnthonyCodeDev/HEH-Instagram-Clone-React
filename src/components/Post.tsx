@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,6 +20,7 @@ interface PostProps {
 const Post = ({ user, content, image, likes, timestamp }: PostProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(likes);
 
   const handleLike = () => {
@@ -53,13 +55,23 @@ const Post = ({ user, content, image, likes, timestamp }: PostProps) => {
         <p className="text-gray-900 leading-relaxed">{content}</p>
 
         {image && (
-          <div className="rounded-xl overflow-hidden">
-            <img
-              src={image}
-              alt="Post content"
-              className="w-full h-auto object-cover"
-            />
-          </div>
+          <>
+            <div
+              className="rounded-xl overflow-hidden cursor-pointer"
+              onClick={() => setIsImageOpen(true)}
+            >
+              <img
+                src={image}
+                alt="Post content"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+            <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
+              <DialogContent variant="bare" hideClose={false}>
+                <img src={image} alt="Post content large" className="max-h-[85vh] w-auto object-contain" />
+              </DialogContent>
+            </Dialog>
+          </>
         )}
       </div>
 

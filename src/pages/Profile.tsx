@@ -46,6 +46,8 @@ const Profile = () => {
     "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400",
   ];
 
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
@@ -366,6 +368,7 @@ const Profile = () => {
                       <div
                         key={index}
                         className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-smooth cursor-pointer"
+                        onClick={() => setPreviewImage(photo)}
                       >
                         <img
                           src={photo}
@@ -375,6 +378,13 @@ const Profile = () => {
                       </div>
                     ))}
                   </div>
+                  <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
+                    <DialogContent variant="bare">
+                      {previewImage && (
+                        <img src={previewImage} alt="Preview" className="max-h-[85vh] w-auto object-contain" />
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </TabsContent>
 
                 <TabsContent value="videos">

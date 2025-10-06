@@ -11,6 +11,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
 import Register from "./pages/Register";
+import Logout from "./pages/Logout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const AppContainer = () => {
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/user/:username" element={<RequireAuth><UserProfile /></RequireAuth>} />
+        <Route path="/logout" element={<Logout />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

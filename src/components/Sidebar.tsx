@@ -79,7 +79,7 @@ const LogoutIcon = () => (
 );
 
 const menuItems = [
-  { icon: HomeIcon, label: "Accueil", path: "/home" },
+  { icon: HomeIcon, label: "Accueil", path: "/" },
   { icon: NotificationIcon, label: "Notifications", path: "/notifications" },
   { icon: MessageIcon, label: "Messages", path: "/messages" },
   { icon: ProfileIcon, label: "Profil", path: "/profile" },
@@ -158,7 +158,7 @@ const Sidebar = () => {
       {/* Footer */}
       <div className="p-4 border-t border-gray-100">
         <Link
-          to="/"
+          to="/logout"
           className="flex items-center gap-3 px-4 py-3 rounded-xl transition-smooth hover:bg-gray-50"
         >
           <div className="flex-shrink-0">
@@ -180,10 +180,11 @@ const Sidebar = () => {
 
         {!isCollapsed && (
           <Button
+            asChild
             variant="stragram"
             className="w-full mt-3"
           >
-            PUBLIER
+            <Link to="/?write=true">PUBLIER</Link>
           </Button>
         )}
       </div>
