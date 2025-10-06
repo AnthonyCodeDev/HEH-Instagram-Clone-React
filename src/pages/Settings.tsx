@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import QuickAdd from '@/components/QuickAdd';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import {
     Camera,
     Lock,
@@ -18,6 +27,79 @@ import {
 
 const Settings = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+    });
+    const [passwordError, setPasswordError] = useState("");
+
+    // Fonction pour gérer le changement de mot de passe
+    const handlePasswordChange = () => {
+        // Réinitialiser l'erreur
+        setPasswordError("");
+
+        // Vérifier que les mots de passe correspondent
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordError("Les mots de passe ne correspondent pas.");
+            return;
+        }
+
+        // Vérifier que le mot de passe est assez fort (au moins 8 caractères)
+        if (passwordData.newPassword.length < 8) {
+            setPasswordError("Le mot de passe doit contenir au moins 8 caractères.");
+            return;
+        }
+
+        // Simuler le changement de mot de passe
+        setTimeout(() => {
+            // Réinitialiser les champs
+            setPasswordData({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: ""
+            });
+
+            // Fermer la popup
+            setIsPasswordDialogOpen(false);
+
+            // Afficher un toast de succès
+            toast({
+                title: "Mot de passe mis à jour",
+                description: "Votre mot de passe a été changé avec succès.",
+                variant: "default",
+            });
+        }, 1000);
+    };
+
+    // Fonction pour gérer le changement de photo de profil
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    // Mettre à jour l'avatar dans le state
+                    setProfileData({
+                        ...profileData,
+                        avatar: event.target.result as string
+                    });
+
+                    // Afficher un toast de succès
+                    toast({
+                        title: "Photo mise à jour",
+                        description: "Votre photo de profil a été changée avec succès.",
+                        variant: "default",
+                    });
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Fonction pour envoyer les données à l'API
     const handleSaveProfile = async () => {
@@ -123,7 +205,19 @@ const Settings = () => {
                                 <div>
                                     <h2 className="text-xl font-semibold text-gray-900 mb-1">{profileData.name}</h2>
                                     <p className="text-gray-600">@{profileData.username}</p>
-                                    <Button variant="outline" size="sm" className="mt-2 flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        accept="image/png,image/jpeg,image/jpg"
+                                        className="hidden"
+                                        onChange={handlePhotoChange}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2 flex items-center gap-2"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
                                         <Camera className="w-4 h-4" />
                                         Changer la photo
                                     </Button>
@@ -297,14 +391,62 @@ const Settings = () => {
                                             "Sauvegarder les modifications"
                                         )}
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2"
-                                        disabled={isLoading}
-                                    >
-                                        <Lock className="w-4 h-4" />
-                                        Changer le mot de passe
-                                    </Button>
+                                    <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className="flex items-center gap-2"
+                                                disabled={isLoading}
+                                            >
+                                                <Lock className="w-4 h-4" />
+                                                Changer le mot de passe
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Changer le mot de passe</DialogTitle>
+                                                <DialogDescription>
+                                                    Entrez votre mot de passe actuel et votre nouveau mot de passe.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="grid gap-4 py-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="current-password">Mot de passe actuel</Label>
+                                                    <Input
+                                                        id="current-password"
+                                                        type="password"
+                                                        value={passwordData.currentPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                                                    <Input
+                                                        id="new-password"
+                                                        type="password"
+                                                        value={passwordData.newPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+                                                    <Input
+                                                        id="confirm-password"
+                                                        type="password"
+                                                        value={passwordData.confirmPassword}
+                                                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                    />
+                                                </div>
+                                                {passwordError && (
+                                                    <div className="text-red-500 text-sm">{passwordError}</div>
+                                                )}
+                                            </div>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Annuler</Button>
+                                                <Button onClick={handlePasswordChange}>Confirmer</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                         </div>
