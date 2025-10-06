@@ -54,6 +54,7 @@ const AppContainer = () => {
         <Route path="/u/:username" element={<RequireAuth><UserProfile /></RequireAuth>} />
         <Route path="/profile/:postId" element={<RequireAuth><ProfilePost /></RequireAuth>} />
         <Route path="/u/:username/:postId" element={<RequireAuth><ProfilePost /></RequireAuth>} />
+        <Route path="/p/:postId" element={<RequireAuth><ProfilePost /></RequireAuth>} />
         <Route path="/logout" element={<Logout />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

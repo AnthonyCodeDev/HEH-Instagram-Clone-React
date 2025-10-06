@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send } from "lucide-react";
@@ -89,6 +90,20 @@ const Messages = () => {
     const [newMessage, setNewMessage] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Vérifier s'il y a un paramètre d'URL pour un utilisateur spécifique
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const userParam = searchParams.get('u');
+
+        if (userParam) {
+            // Trouver la conversation avec cet utilisateur
+            const conversation = allConversations.find(conv => conv.user.username === userParam);
+            if (conversation) {
+                setActiveConversationId(conversation.id);
+            }
+        }
+    }, [allConversations]);
 
     // Trouver la conversation active
     const activeConversation = allConversations.find(conv => conv.id === activeConversationId) || allConversations[0];
@@ -186,15 +201,17 @@ const Messages = () => {
                                         className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation.id === conversation.id ? 'bg-gray-50' : ''}`}
                                         onClick={() => setActiveConversationId(conversation.id)}
                                     >
-                                        <div className="relative">
+                                        <Link to={`/u/${conversation.user.username}`} className="relative" onClick={(e) => e.stopPropagation()}>
                                             <Avatar className="w-10 h-10">
                                                 <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
                                                 <AvatarFallback>{conversation.user.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${conversation.user.status === "En ligne" ? "bg-green-500" : "bg-gray-300"}`}></div>
-                                        </div>
+                                        </Link>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900">{conversation.user.name}</p>
+                                            <Link to={`/u/${conversation.user.username}`} className="font-medium text-gray-900 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                {conversation.user.name}
+                                            </Link>
                                             <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
                                         </div>
                                     </div>
@@ -205,12 +222,16 @@ const Messages = () => {
                         {/* Active conversation */}
                         <div className="col-span-8 bg-white rounded-xl border border-gray-200 flex flex-col">
                             <div className="p-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-                                <Avatar className="w-10 h-10">
-                                    <AvatarImage src={activeConversation.user.avatar} alt={activeConversation.user.name} />
-                                    <AvatarFallback>{activeConversation.user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
+                                <Link to={`/u/${activeConversation.user.username}`}>
+                                    <Avatar className="w-10 h-10">
+                                        <AvatarImage src={activeConversation.user.avatar} alt={activeConversation.user.name} />
+                                        <AvatarFallback>{activeConversation.user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </Link>
                                 <div>
-                                    <p className="font-semibold text-gray-900">{activeConversation.user.name}</p>
+                                    <Link to={`/u/${activeConversation.user.username}`} className="font-semibold text-gray-900 hover:underline">
+                                        {activeConversation.user.name}
+                                    </Link>
                                     <p className="text-xs text-gray-500">{activeConversation.user.status}</p>
                                 </div>
                             </div>

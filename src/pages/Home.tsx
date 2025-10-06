@@ -1,50 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Heart, Bookmark, Image, X } from "lucide-react";
+import { Image, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
 
-type Comment = { author: string; avatar: string; text: string; };
-
-const PostComments = ({ comments }: { comments: Comment[]; }) => {
-  const [visible, setVisible] = useState(3);
-  const shown = comments.slice(0, visible);
-  const hasMore = comments.length > visible;
-
-  return (
-    <div className="px-6 pb-6 pt-2">
-      <div className="space-y-3">
-        {shown.map((c, idx) => (
-          <div key={idx} className="flex items-start gap-3">
-            <div className="shrink-0">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={c.avatar} alt={c.author} />
-                <AvatarFallback>{c.author[0]}</AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-800">
-              <span className="font-semibold mr-1">{c.author}</span>
-              {c.text}
-            </div>
-          </div>
-        ))}
-        {hasMore && (
-          <button
-            className="text-sm text-stragram-primary hover:underline"
-            onClick={() => setVisible((v) => v + 5)}
-          >
-            Voir plus
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const Home = () => {
   const [newPostText, setNewPostText] = useState("");
@@ -64,6 +26,7 @@ const Home = () => {
   // State pour les posts
   const [posts, setPosts] = useState([
     {
+      id: "lucashergz20-photo-0",
       user: { name: "Lucas Hergz", username: "lucashergz20", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi laoreet libero eget lacus mattis, ut luctus augue pulvinar.",
       image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200",
@@ -77,6 +40,7 @@ const Home = () => {
       ]
     },
     {
+      id: "tomberton-photo-0",
       user: { name: "Tom Berton", username: "tomberton", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
       content: "Randonnée incroyable aujourd'hui, l'air frais fait du bien !",
       image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
@@ -87,6 +51,7 @@ const Home = () => {
       ]
     },
     {
+      id: "luciemarinier10-photo-0",
       user: { name: "Lucie Marinier", username: "luciemarinier10", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400" },
       content: "Un café et c'est reparti pour créer ✨",
       image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
@@ -98,6 +63,7 @@ const Home = () => {
       ]
     },
     {
+      id: "mariemaring-photo-0",
       user: { name: "Marie Marind", username: "mariemaring", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
       contentParagraphs: [
         "Aujourd'hui, j'avais envie de quelque chose de réconfortant et simple à partager avec vous. J'ai ressorti ma vieille recette de tarte aux pommes, celle qui parfume toute la maison et qui rappelle les goûters d'automne. Une pâte bien dorée, des pommes légèrement caramélisées, une pointe de cannelle… rien de compliqué, juste le plaisir de prendre le temps.",
@@ -109,6 +75,7 @@ const Home = () => {
       ]
     },
     {
+      id: "johndoe-photo-0",
       user: { name: "John Doe", username: "johndoe", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400" },
       content: "Nouvelle playlist dispo, dites-moi ce que vous en pensez !",
       image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
@@ -128,17 +95,19 @@ const Home = () => {
 
   // Mettre à jour les états des posts quand posts change
   useEffect(() => {
-    setPostStates(
-      posts.map((post, idx) => {
+    // Éviter de référencer postStates dans l'effet pour éviter les boucles
+    setPostStates(prevStates => {
+      // S'assurer que nous avons un état pour chaque post
+      const newStates = posts.map((post, idx) => {
         // Conserver les états existants si disponibles
-        const existingState = postStates[idx];
-        if (existingState) {
-          return existingState;
+        if (idx < prevStates.length) {
+          return prevStates[idx];
         }
-        // Sinon, créer un nouvel état
+        // Sinon, créer un nouvel état pour les nouveaux posts
         return { liked: false, saved: false, likes: 0 };
-      })
-    );
+      });
+      return newStates;
+    });
   }, [posts.length]);
 
   const toggleLike = (index: number) => {
@@ -254,31 +223,45 @@ const Home = () => {
 
                 <button
                   className="w-24 h-9 bg-[#EC3558] text-white text-sm font-medium rounded-[11px] hover:bg-[#EC3558]/90 transition-colors"
-                  onClick={() => {
+                  onClick={(e) => {
+                    // Empêcher le comportement par défaut du bouton
+                    e.preventDefault();
+
                     // Vérifier qu'il y a du contenu à publier
                     if (!newPostText.trim() && !newPostImage) return;
 
                     // Créer un nouveau post
                     const newPost = {
+                      id: `bahsonnom-photo-${new Date().getTime()}`,
                       user: {
                         name: "Bahson Nom",
                         username: "bahsonnom",
                         avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
                       },
-                      content: newPostText,
+                      content: newPostText.trim(),
                       image: newPostImage || undefined,
                       comments: []
                     };
 
-                    // Ajouter le nouveau post au début du flux
-                    setPosts(prevPosts => [newPost, ...prevPosts]);
+                    try {
+                      // Ajouter le nouveau post au début du flux
+                      setPosts(prevPosts => [newPost, ...prevPosts]);
 
-                    // Reset form
-                    setNewPostText("");
-                    setNewPostImage(null);
-                    // Réinitialiser l'input file
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
+                      // Mettre à jour les états des posts pour inclure le nouveau post
+                      setPostStates(prevStates => [
+                        { liked: false, saved: false, likes: Math.floor(Math.random() * 50) },
+                        ...prevStates
+                      ]);
+
+                      // Reset form
+                      setNewPostText("");
+                      setNewPostImage(null);
+                      // Réinitialiser l'input file
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    } catch (error) {
+                      console.error("Erreur lors de la publication:", error);
                     }
                   }}
                 >
@@ -290,78 +273,26 @@ const Home = () => {
 
           {/* Feed - posts variés */}
           {posts.map((post, i) => (
-            <div key={post.user.username + i} className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 last:mb-0">
-              {/* Post Header (whole block clickable) */}
-              <Link to={`/u/${post.user.username}`} className="flex items-start gap-3 p-6 pb-4">
-                <div className="shrink-0">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage
-                      src={post.user.avatar}
-                      alt={post.user.name}
-                    />
-                    <AvatarFallback>{post.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900">{post.user.name}</span>
-                  </div>
-                  <span className="text-sm text-gray-500">@{post.user.username}</span>
-                </div>
-              </Link>
-
-              {/* Post Content */}
-              <div className="px-6 pb-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-gray-900 leading-relaxed">{post.content}</p>
-                  </div>
-
-                  {post.image ? (
-                    <div
-                      className="rounded-xl overflow-hidden cursor-pointer"
-                      onClick={() => setPreviewImage(post.image as string)}
-                    >
-                      <img
-                        src={post.image as string}
-                        alt="Post content"
-                        className="w-full h-auto object-cover"
-                      />
-                    </div>
-                  ) : post.contentParagraphs ? (
-                    <div className="space-y-3">
-                      {post.contentParagraphs.map((p: string, idx: number) => (
-                        <p key={idx} className="text-gray-900 leading-relaxed">{p}</p>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Post Actions */}
-              <div className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    className={`flex items-center gap-2 transition-colors ${postStates[i].liked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => toggleLike(i)}
-                  >
-                    <Heart className={`w-5 h-5 ${postStates[i].liked ? 'fill-current' : ''}`} />
-                    <span className="text-sm">{postStates[i].likes} likes</span>
-                  </button>
-                </div>
-
-                <button
-                  className={`transition-colors ${postStates[i].saved ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
-                  onClick={() => toggleSave(i)}
-                  aria-label="Enregistrer pour plus tard"
-                >
-                  <Bookmark className={`w-5 h-5 ${postStates[i].saved ? 'fill-current' : ''}`} />
-                </button>
-              </div>
-
-              {/* Comments */}
-              <PostComments comments={(post as any).comments || []} />
-            </div>
+            <PostWithComments
+              key={post.user.username + i}
+              post={post as PostData}
+              postState={postStates[i]}
+              postIndex={i}
+              onLike={toggleLike}
+              onSave={toggleSave}
+              onAddComment={(postIndex, comment) => {
+                setPosts(prevPosts => {
+                  const newPosts = [...prevPosts];
+                  if (newPosts[postIndex]) {
+                    const post = newPosts[postIndex];
+                    // Ajouter le nouveau commentaire au début du tableau pour qu'il apparaisse en premier
+                    const comments = [comment, ...((post as any).comments || [])];
+                    (newPosts[postIndex] as any).comments = comments;
+                  }
+                  return newPosts;
+                });
+              }}
+            />
           ))}
 
           <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>

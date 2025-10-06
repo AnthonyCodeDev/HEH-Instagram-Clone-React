@@ -183,7 +183,7 @@ const UserProfile = () => {
               </div>
 
               {/* Edit Profile Button pour bahsonnom */}
-              {username === "bahsonnom" && (
+              {username === "bahsonnom" ? (
                 <div className="absolute bottom-6 right-6">
                   <Button
                     variant="outline"
@@ -193,6 +193,19 @@ const UserProfile = () => {
                     <Link to="/settings">
                       <Settings className="w-4 h-4 mr-2" />
                       Éditer le profil
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="absolute bottom-6 right-6">
+                  <Button
+                    variant="outline"
+                    className="bg-white text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-full h-10 px-4"
+                    asChild
+                  >
+                    <Link to={`/messages?u=${username}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                      Message
                     </Link>
                   </Button>
                 </div>
@@ -283,7 +296,7 @@ const UserProfile = () => {
                     {user.photos.map((photo, index) => (
                       <Link
                         key={index}
-                        to={`/u/${username}/${username}-photo-${index}`}
+                        to={`/p/${username}-photo-${index}`}
                         className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                       >
                         <img
@@ -301,7 +314,7 @@ const UserProfile = () => {
                     {user.videos.map((video, index) => (
                       <Link
                         key={index}
-                        to={`/u/${username}/${username}-video-${index}`}
+                        to={`/p/${username}-video-${index}`}
                         className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
                       >
                         <img

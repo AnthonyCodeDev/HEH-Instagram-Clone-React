@@ -93,23 +93,23 @@ const Settings = () => {
             {/* Main Content */}
             <div className="flex max-w-none h-full flex-1">
                 <div className="flex-1 p-6 overflow-y-auto">
-                    <div className="max-w-2xl mx-auto">
-                        {/* Header */}
-                        <div className="mb-6">
-                            <h1
-                                className="font-medium capitalize mb-2"
-                                style={{
-                                    fontFamily: '"SF Pro", sans-serif',
-                                    fontSize: '19px',
-                                    fontWeight: 590,
-                                    color: '#252525',
-                                    textAlign: 'center',
-                                    textTransform: 'capitalize'
-                                }}
-                            >
-                                Paramètres
-                            </h1>
-                        </div>
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h1
+                            className="font-medium capitalize"
+                            style={{
+                                fontFamily: '"SF Pro", sans-serif',
+                                fontSize: '19px',
+                                fontWeight: 590,
+                                color: '#252525',
+                                textAlign: 'left',
+                                textTransform: 'capitalize'
+                            }}
+                        >
+                            Paramètres
+                        </h1>
+                    </div>
+                    <div>
 
                         {/* Account Information */}
                         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
