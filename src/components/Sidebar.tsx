@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useFocusCompose } from "@/hooks/useFocusCompose";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -89,6 +90,7 @@ const menuItems = [
 const Sidebar = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { focusCompose } = useFocusCompose();
 
   return (
     <div className={`bg-white border-r border-gray-100 h-screen flex flex-col transition-smooth ${isCollapsed ? 'w-20' : 'w-64'
@@ -180,11 +182,11 @@ const Sidebar = () => {
 
         {!isCollapsed && (
           <Button
-            asChild
             variant="stragram"
             className="w-full mt-3"
+            onClick={focusCompose}
           >
-            <Link to="/?write=true">PUBLIER</Link>
+            PUBLIER
           </Button>
         )}
       </div>

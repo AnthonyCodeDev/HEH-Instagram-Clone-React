@@ -36,8 +36,8 @@ const Settings = () => {
     });
     const [passwordError, setPasswordError] = useState("");
 
-    // Fonction pour gérer le changement de mot de passe
-    const handlePasswordChange = () => {
+    // Fonction pour gérer le changement de mot de passe avec AJAX
+    const handlePasswordChange = async () => {
         // Réinitialiser l'erreur
         setPasswordError("");
 
@@ -53,8 +53,35 @@ const Settings = () => {
             return;
         }
 
-        // Simuler le changement de mot de passe
-        setTimeout(() => {
+        try {
+            // Afficher un indicateur de chargement
+            setIsLoading(true);
+
+            // Préparer les données à envoyer
+            const dataToSend = {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            };
+
+            // Faire la requête AJAX
+            const response = await fetch('https://localhost/api/users/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer fake-token-123456789'
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            // Vérifier la réponse
+            if (!response.ok) {
+                // Simuler une erreur d'authentification si le mot de passe actuel est incorrect
+                if (passwordData.currentPassword !== "password123") {
+                    throw new Error("Le mot de passe actuel est incorrect.");
+                }
+                throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
+            }
+
             // Réinitialiser les champs
             setPasswordData({
                 currentPassword: "",
@@ -71,33 +98,106 @@ const Settings = () => {
                 description: "Votre mot de passe a été changé avec succès.",
                 variant: "default",
             });
-        }, 1000);
+        } catch (error) {
+            // Afficher l'erreur
+            setPasswordError(error instanceof Error ? error.message : "Une erreur est survenue lors du changement de mot de passe.");
+
+            console.error('Erreur lors du changement de mot de passe:', error);
+        } finally {
+            // Désactiver l'indicateur de chargement
+            setIsLoading(false);
+        }
     };
 
-    // Fonction pour gérer le changement de photo de profil
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Fonction pour gérer le changement de photo de profil avec AJAX
+    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            const reader = new FileReader();
 
-            reader.onload = (event) => {
-                if (event.target?.result) {
-                    // Mettre à jour l'avatar dans le state
-                    setProfileData({
-                        ...profileData,
-                        avatar: event.target.result as string
-                    });
+            // Vérifier le type de fichier
+            if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+                toast({
+                    title: "Format non supporté",
+                    description: "Veuillez sélectionner une image au format JPEG ou PNG.",
+                    variant: "destructive",
+                });
+                return;
+            }
 
-                    // Afficher un toast de succès
-                    toast({
-                        title: "Photo mise à jour",
-                        description: "Votre photo de profil a été changée avec succès.",
-                        variant: "default",
-                    });
+            // Vérifier la taille du fichier (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast({
+                    title: "Fichier trop volumineux",
+                    description: "La taille de l'image ne doit pas dépasser 5MB.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            try {
+                // Afficher un indicateur de chargement
+                setIsLoading(true);
+
+                // Lire le fichier en base64
+                const reader = new FileReader();
+
+                // Créer une promesse pour attendre que la lecture soit terminée
+                const base64Image = await new Promise<string>((resolve, reject) => {
+                    reader.onload = (event) => {
+                        if (event.target?.result) {
+                            resolve(event.target.result as string);
+                        } else {
+                            reject(new Error("Échec de la lecture du fichier"));
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsDataURL(file);
+                });
+
+                // Préparer les données à envoyer
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                // Faire la requête AJAX
+                const response = await fetch('https://localhost/api/users/avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer fake-token-123456789'
+                    },
+                    body: formData
+                });
+
+                // Vérifier la réponse
+                if (!response.ok) {
+                    throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
                 }
-            };
 
-            reader.readAsDataURL(file);
+                // Mettre à jour l'avatar dans le state
+                setProfileData({
+                    ...profileData,
+                    avatar: base64Image
+                });
+
+                // Afficher un toast de succès
+                toast({
+                    title: "Photo mise à jour",
+                    description: "Votre photo de profil a été changée avec succès.",
+                    variant: "default",
+                });
+
+            } catch (error) {
+                console.error('Erreur lors du changement de photo de profil:', error);
+
+                // Afficher un toast d'erreur
+                toast({
+                    title: "Erreur",
+                    description: error instanceof Error ? error.message : "Une erreur est survenue lors du changement de photo de profil.",
+                    variant: "destructive",
+                });
+            } finally {
+                // Désactiver l'indicateur de chargement
+                setIsLoading(false);
+            }
         }
     };
 
@@ -217,9 +317,19 @@ const Settings = () => {
                                         size="sm"
                                         className="mt-2 flex items-center gap-2"
                                         onClick={() => fileInputRef.current?.click()}
+                                        disabled={isLoading}
                                     >
-                                        <Camera className="w-4 h-4" />
-                                        Changer la photo
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Chargement...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Camera className="w-4 h-4" />
+                                                Changer la photo
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -442,8 +552,26 @@ const Settings = () => {
                                                 )}
                                             </div>
                                             <DialogFooter>
-                                                <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Annuler</Button>
-                                                <Button onClick={handlePasswordChange}>Confirmer</Button>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setIsPasswordDialogOpen(false)}
+                                                    disabled={isLoading}
+                                                >
+                                                    Annuler
+                                                </Button>
+                                                <Button
+                                                    onClick={handlePasswordChange}
+                                                    disabled={isLoading}
+                                                >
+                                                    {isLoading ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Traitement...
+                                                        </>
+                                                    ) : (
+                                                        "Confirmer"
+                                                    )}
+                                                </Button>
                                             </DialogFooter>
                                         </DialogContent>
                                     </Dialog>

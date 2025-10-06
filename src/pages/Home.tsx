@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Image, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
@@ -13,14 +14,22 @@ const Home = () => {
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const location = useLocation();
 
+  // Effet pour gérer le focus initial si nécessaire
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    // Si on vient d'une autre page et qu'on a le paramètre write=true
+    const params = new URLSearchParams(location.search);
     if (params.get("write") === "true" && composeRef.current) {
       composeRef.current.focus();
       composeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Nettoyer l'URL
+      if (window.history.replaceState) {
+        window.history.replaceState({}, "", "/");
+      }
     }
-  }, []);
+  }, [location.search]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // State pour les posts
