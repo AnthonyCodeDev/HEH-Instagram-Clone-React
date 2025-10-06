@@ -9,6 +9,43 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
 
+type Comment = { author: string; avatar: string; text: string; };
+
+const PostComments = ({ comments }: { comments: Comment[]; }) => {
+  const [visible, setVisible] = useState(3);
+  const shown = comments.slice(0, visible);
+  const hasMore = comments.length > visible;
+
+  return (
+    <div className="px-6 pb-6 pt-2">
+      <div className="space-y-3">
+        {shown.map((c, idx) => (
+          <div key={idx} className="flex items-start gap-3">
+            <div className="shrink-0">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={c.avatar} alt={c.author} />
+                <AvatarFallback>{c.author[0]}</AvatarFallback>
+              </Avatar>
+            </div>
+            <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-800">
+              <span className="font-semibold mr-1">{c.author}</span>
+              {c.text}
+            </div>
+          </div>
+        ))}
+        {hasMore && (
+          <button
+            className="text-sm text-stragram-primary hover:underline"
+            onClick={() => setVisible((v) => v + 5)}
+          >
+            Voir plus
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Home = () => {
   const [newPostText, setNewPostText] = useState("");
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
@@ -20,7 +57,7 @@ const Home = () => {
       composeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, []);
-  const [isImageOpen, setIsImageOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -78,58 +115,99 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Feed - 5 posts */}
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 last:mb-0">
-              {/* Post Header */}
-              <div className="flex items-start gap-3 p-6 pb-4">
-                <Link to="/user/lucashergz20" className="shrink-0">
+          {/* Feed - posts variés */}
+          {[
+            {
+              user: { name: "Lucas Hergz", username: "lucashergz20", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
+              content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi laoreet libero eget lacus mattis, ut luctus augue pulvinar.",
+              image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200",
+              comments: [
+                { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Magnifique coucher de soleil !" },
+                { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Ohh superbe ! tu vois" },
+                { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Ça donne envie de voyager." },
+                { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Incroyable lumière." },
+                { author: "Paul", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200", text: "Top !" },
+                { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "J'adore." }
+              ]
+            },
+            {
+              user: { name: "Tom Berton", username: "tomberton", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
+              content: "Randonnée incroyable aujourd'hui, l'air frais fait du bien !",
+              image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
+              comments: [
+                { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Le spot a l'air dingue !" },
+                { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Tu m'emmènes la prochaine ?" },
+                { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "On veut l'itinéraire !" }
+              ]
+            },
+            {
+              user: { name: "Lucie Marinier", username: "luciemarinier10", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400" },
+              content: "Un café et c'est reparti pour créer ✨",
+              image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
+              comments: [
+                { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Team espresso ☕" },
+                { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "La tasse est trop belle !" },
+                { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Ça sent la productivité." },
+                { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "On bosse ensemble ?" }
+              ]
+            },
+            {
+              user: { name: "Marie Marind", username: "mariemaring", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
+              content: "Recette du jour: tarte aux pommes maison 🍎",
+              image: "https://images.unsplash.com/photo-1509440159598-8b1d0b3bdeba?w=1200",
+              comments: [
+                { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "J'arrive pour le dessert !" }
+              ]
+            },
+            {
+              user: { name: "John Doe", username: "johndoe", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400" },
+              content: "Nouvelle playlist dispo, dites-moi ce que vous en pensez !",
+              image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
+              comments: [
+                { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "J'adore le 3e titre." },
+                { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Parfait pour courir." },
+                { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Je la mets en boucle." },
+                { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Tu gères !" }
+              ]
+            }
+          ].map((post, i) => (
+            <div key={post.user.username + i} className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 last:mb-0">
+              {/* Post Header (whole block clickable) */}
+              <Link to={`/user/${post.user.username}`} className="flex items-start gap-3 p-6 pb-4">
+                <div className="shrink-0">
                   <Avatar className="w-12 h-12">
                     <AvatarImage
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-                      alt="Lucas Hergz"
+                      src={post.user.avatar}
+                      alt={post.user.name}
                     />
-                    <AvatarFallback>LH</AvatarFallback>
+                    <AvatarFallback>{post.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
-                </Link>
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Link to="/user/lucashergz20" className="font-semibold text-gray-900">Lucas Hergz</Link>
+                    <span className="font-semibold text-gray-900">{post.user.name}</span>
                   </div>
-                  <Link to="/user/lucashergz20" className="text-sm text-gray-500">@lucashergz20</Link>
+                  <span className="text-sm text-gray-500">@{post.user.username}</span>
                 </div>
-              </div>
+              </Link>
 
               {/* Post Content */}
               <div className="px-6 pb-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <p className="text-gray-900 leading-relaxed">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi laoreet libero eget lacus mattis, ut luctus augue pulvinar.
-                    </p>
-                    <p className="text-gray-900 leading-relaxed">
-                      Nullam eget tempus est, sed porta odio. Curabitur ut turpis luctus, volutpat nisl semper, posuere justo.
-                    </p>
-                    <p className="text-gray-900 leading-relaxed">
-                      Rejoignez-moi sur <span className="text-stragram-primary">stragram.fr/johndoe</span>
-                    </p>
+                    <p className="text-gray-900 leading-relaxed">{post.content}</p>
                   </div>
 
                   <div
                     className="rounded-xl overflow-hidden cursor-pointer"
-                    onClick={() => setIsImageOpen(true)}
+                    onClick={() => setPreviewImage(post.image)}
                   >
                     <img
-                      src={sunsetBeach}
+                      src={post.image}
                       alt="Post content"
                       className="w-full h-auto object-cover"
                     />
                   </div>
-                  <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
-                    <DialogContent variant="bare">
-                      <img src={sunsetBeach} alt="Post content large" className="max-h-[85vh] w-auto object-contain" />
-                    </DialogContent>
-                  </Dialog>
                 </div>
               </div>
 
@@ -145,28 +223,18 @@ const Home = () => {
                 </Button>
               </div>
 
-              {/* Bottom Profile */}
-              <div className="px-6 pb-6 pt-2">
-                <div className="flex items-center gap-3">
-                  <Link to="/user/lucashergz20" className="shrink-0">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-                        alt="Lucas Hergz"
-                      />
-                      <AvatarFallback>LH</AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Link to="/user/lucashergz20" className="font-semibold text-gray-900 text-sm">Lucas Hergz</Link>
-                    </div>
-                    <Link to="/user/lucashergz20" className="text-xs text-gray-500">@lucashergz20</Link>
-                  </div>
-                </div>
-              </div>
+              {/* Comments */}
+              <PostComments comments={(post as any).comments || []} />
             </div>
           ))}
+
+          <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
+            <DialogContent variant="bare">
+              {previewImage && (
+                <img src={previewImage} alt="Post content large" className="max-h-[85vh] w-auto object-contain" />
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Right Sidebar */}
