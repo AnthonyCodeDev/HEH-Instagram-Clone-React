@@ -222,7 +222,7 @@ const Notifications = () => {
                 >
                   <div className="flex items-start gap-4">
                     {/* User Avatar */}
-                    <Link to={`/user/${notification.user.username}`} className="relative flex-shrink-0">
+                    <Link to={`/u/${notification.user.username}`} className="relative flex-shrink-0">
                       <Avatar className="w-14 h-14 hover:scale-105 transition-transform duration-200 ring-2 ring-white shadow-sm">
                         <AvatarImage src={notification.user.avatar} alt={notification.user.name} />
                         <AvatarFallback className="bg-gray-100 text-gray-600 font-semibold">
@@ -242,7 +242,7 @@ const Notifications = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <Link
-                              to={`/user/${notification.user.username}`}
+                              to={`/u/${notification.user.username}`}
                               className="font-semibold text-gray-900 hover:text-stragram-primary transition-colors text-base"
                               onClick={(e) => e.stopPropagation()}
                             >

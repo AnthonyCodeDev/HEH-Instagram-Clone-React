@@ -5,16 +5,53 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from '@/components/ui/use-toast';
 import {
     Camera,
     Lock,
     Mail,
     MapPin,
     Calendar,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Loader2
 } from 'lucide-react';
 
 const Settings = () => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Fonction pour simuler un appel API
+    const handleSaveProfile = async () => {
+        setIsLoading(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Simuler une réponse réussie ou échouée aléatoirement
+            const isSuccess = Math.random() > 0.3; // 70% de chance de succès
+
+            if (isSuccess) {
+                // Afficher un toast de succès
+                toast({
+                    title: "Profil mis à jour",
+                    description: "Vos modifications ont été enregistrées avec succès.",
+                    variant: "default",
+                });
+            } else {
+                // Simuler une erreur
+                throw new Error("Erreur de connexion au serveur");
+            }
+        } catch (error) {
+            // Afficher un toast d'erreur
+            toast({
+                title: "Erreur",
+                description: error instanceof Error ? error.message : "Une erreur est survenue lors de la mise à jour du profil.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const [profileData, setProfileData] = useState({
         name: "Lucas Hergz",
         username: "lucashergz20",
@@ -228,8 +265,25 @@ const Settings = () => {
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
-                                    <Button className="flex-1">Sauvegarder les modifications</Button>
-                                    <Button variant="outline" className="flex items-center gap-2">
+                                    <Button
+                                        className="flex-1"
+                                        onClick={handleSaveProfile}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Sauvegarde en cours...
+                                            </>
+                                        ) : (
+                                            "Sauvegarder les modifications"
+                                        )}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="flex items-center gap-2"
+                                        disabled={isLoading}
+                                    >
                                         <Lock className="w-4 h-4" />
                                         Changer le mot de passe
                                     </Button>

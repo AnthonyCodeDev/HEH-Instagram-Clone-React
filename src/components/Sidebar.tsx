@@ -82,7 +82,7 @@ const menuItems = [
   { icon: HomeIcon, label: "Accueil", path: "/" },
   { icon: NotificationIcon, label: "Notifications", path: "/notifications" },
   { icon: MessageIcon, label: "Messages", path: "/messages" },
-  { icon: ProfileIcon, label: "Profil", path: "/profile" },
+  { icon: ProfileIcon, label: "Profil", path: "/u/bahsonnom" },
   { icon: SettingsIcon, label: "Paramètres", path: "/settings" },
 ];
 

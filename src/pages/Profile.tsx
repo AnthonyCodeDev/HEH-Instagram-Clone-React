@@ -365,26 +365,26 @@ const Profile = () => {
                 <TabsContent value="photos">
                   <div className="grid grid-cols-3 gap-2">
                     {photos.map((photo, index) => (
-                      <div
+                      <a
                         key={index}
                         className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-smooth cursor-pointer"
-                        onClick={() => setPreviewImage(photo)}
+                        href={`/profile/${index + 1}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.history.pushState({
+                            state: { image: photo, user: { name: profileData.name, username: profileData.username, avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" } }
+                          }, '', `/profile/${index + 1}`);
+                          window.dispatchEvent(new PopStateEvent('popstate'));
+                        }}
                       >
                         <img
                           src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </a>
                     ))}
                   </div>
-                  <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
-                    <DialogContent variant="bare">
-                      {previewImage && (
-                        <img src={previewImage} alt="Preview" className="max-h-[85vh] w-auto object-contain" />
-                      )}
-                    </DialogContent>
-                  </Dialog>
                 </TabsContent>
 
                 <TabsContent value="videos">

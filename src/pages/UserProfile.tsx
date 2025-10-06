@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
@@ -13,6 +12,29 @@ import forestCover from "@/assets/forest-cover.jpg";
 
 // Data for different users
 const userData = {
+  "bahsonnom": {
+    name: "Bahson Nom",
+    username: "bahsonnom",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    coverImage: sunsetBeach,
+    bio: "Mon compte personnel sur Stragram. Je partage mes créations et mes passions !",
+    stats: { posts: 27, likes: 512, followers: 183, following: 94 },
+    joinDate: "janvier 2023",
+    location: "Paris, France",
+    photos: [
+      "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=400",
+      "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400",
+      "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
+    ],
+    videos: [
+      "https://images.unsplash.com/photo-1574015974293-817f0ebebb74?w=400",
+      "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
+    ],
+  },
   "lucashergz20": {
     name: "Lucas Hergz",
     username: "lucashergz20",
@@ -159,6 +181,22 @@ const UserProfile = () => {
                 </Avatar>
                 <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
+
+              {/* Edit Profile Button pour bahsonnom */}
+              {username === "bahsonnom" && (
+                <div className="absolute bottom-6 right-6">
+                  <Button
+                    variant="outline"
+                    className="bg-white text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-full h-10 px-4"
+                    asChild
+                  >
+                    <Link to="/settings">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Éditer le profil
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Profile Details */}
@@ -198,15 +236,9 @@ const UserProfile = () => {
                 </div>
               </div>
 
-              {/* Follow Section */}
-              <div className="border-t pt-4">
-                <p className="text-sm text-gray-600 mb-3 uppercase tracking-wide font-medium">ABONNEMENT</p>
-                {username === "lucashergz20" ? (
-                  <Button variant="outline" className="w-full h-12 text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-[28.5px]">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Éditer le profil
-                  </Button>
-                ) : (
+              {/* Follow Section - uniquement pour les autres utilisateurs, pas pour bahsonnom */}
+              {username !== "bahsonnom" && (
+                <div className="border-t pt-4">
                   <button
                     onClick={() => setIsFollowing(!isFollowing)}
                     className={`relative w-full h-[57px] rounded-[28.5px] transition-all duration-200 ${!isFollowing
@@ -224,8 +256,8 @@ const UserProfile = () => {
                       {isFollowing ? "Abonné" : "S'abonner"}
                     </span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Content Tabs */}
@@ -249,33 +281,27 @@ const UserProfile = () => {
                 <TabsContent value="photos" className="p-0 mt-0">
                   <div className="grid grid-cols-3 gap-1">
                     {user.photos.map((photo, index) => (
-                      <div
+                      <Link
                         key={index}
+                        to={`/u/${username}/${username}-photo-${index}`}
                         className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
-                        onClick={() => setPreviewImage(photo)}
                       >
                         <img
                           src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </Link>
                     ))}
                   </div>
-                  <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
-                    <DialogContent variant="bare">
-                      {previewImage && (
-                        <img src={previewImage} alt="Preview" className="max-h-[85vh] w-auto object-contain" />
-                      )}
-                    </DialogContent>
-                  </Dialog>
                 </TabsContent>
 
                 <TabsContent value="videos" className="p-0 mt-0">
                   <div className="grid grid-cols-3 gap-1">
                     {user.videos.map((video, index) => (
-                      <div
+                      <Link
                         key={index}
+                        to={`/u/${username}/${username}-video-${index}`}
                         className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
                       >
                         <img
@@ -299,7 +325,7 @@ const UserProfile = () => {
                             </svg>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </TabsContent>
