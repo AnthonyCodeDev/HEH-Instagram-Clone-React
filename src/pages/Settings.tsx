@@ -19,28 +19,46 @@ import {
 const Settings = () => {
     const [isLoading, setIsLoading] = useState(false);
 
-    // Fonction pour simuler un appel API
+    // Fonction pour envoyer les données à l'API
     const handleSaveProfile = async () => {
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Préparation des données à envoyer
+            const dataToSend = {
+                ...profileData,
+                updatedAt: new Date().toISOString()
+            };
 
-            // Simuler une réponse réussie ou échouée aléatoirement
-            const isSuccess = Math.random() > 0.3; // 70% de chance de succès
+            // Envoi des données à l'API
+            const response = await fetch('https://localhost/api/users/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer fake-token-123456789'
+                },
+                body: JSON.stringify(dataToSend)
+            });
 
-            if (isSuccess) {
-                // Afficher un toast de succès
-                toast({
-                    title: "Profil mis à jour",
-                    description: "Vos modifications ont été enregistrées avec succès.",
-                    variant: "default",
-                });
-            } else {
-                // Simuler une erreur
-                throw new Error("Erreur de connexion au serveur");
+            // Vérification de la réponse
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
             }
+
+            // Traitement de la réponse
+            const result = await response.json();
+
+            // Afficher un toast de succès
+            toast({
+                title: "Profil mis à jour",
+                description: "Vos modifications ont été enregistrées avec succès.",
+                variant: "default",
+            });
+
+            console.log('Profil mis à jour:', result);
         } catch (error) {
+            console.error('Erreur lors de la mise à jour du profil:', error);
+
             // Afficher un toast d'erreur
             toast({
                 title: "Erreur",
