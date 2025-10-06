@@ -106,7 +106,7 @@ const PostWithComments = ({
                     {post.image ? (
                         <Link to={`/p/${post.id}`}>
                             <div
-                                className="rounded-xl overflow-hidden cursor-pointer"
+                                className="rounded-xl overflow-hidden cursor-pointer mt-5"
                                 onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewImage(post.image as string);

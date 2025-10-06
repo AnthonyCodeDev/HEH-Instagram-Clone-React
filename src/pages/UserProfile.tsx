@@ -85,7 +85,6 @@ const userData = {
     location: "Nice, France",
     photos: [
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
-      "https://images.unsplash.com/photo-1464822759844-d150baec0bc5?w=400",
       "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=400",
       "https://images.unsplash.com/photo-1493787039806-2edcbe808750?w=400",
     ],

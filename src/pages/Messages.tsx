@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send } from "lucide-react";
@@ -70,16 +70,8 @@ const conversations = [
             avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400",
             status: "Inactive"
         },
-        lastMessage: "À bientôt !",
-        messages: [
-            { id: "m1", sender: "them", content: "Coucou ! Comment s'est passé ton week-end ?", time: "Lundi" },
-            { id: "m2", sender: "me", content: "Très bien, j'ai pu me reposer. Et toi ?", time: "Lundi" },
-            { id: "m3", sender: "them", content: "Pareil, j'en avais besoin. Tu es dispo pour un café cette semaine ?", time: "Lundi" },
-            { id: "m4", sender: "me", content: "Oui, jeudi après-midi ça irait ?", time: "Lundi" },
-            { id: "m5", sender: "them", content: "Parfait ! 15h au café habituel ?", time: "Lundi" },
-            { id: "m6", sender: "me", content: "C'est noté !", time: "Lundi" },
-            { id: "m7", sender: "them", content: "À bientôt !", time: "Lundi" }
-        ]
+        lastMessage: "Nouvelle conversation",
+        messages: []
     }
 ];
 
@@ -90,6 +82,14 @@ const Messages = () => {
     const [newMessage, setNewMessage] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+
+    // Fonction pour changer de conversation active et mettre à jour l'URL
+    const handleConversationChange = (conversationId: string) => {
+        setActiveConversationId(conversationId);
+        // Mettre à jour l'URL pour supprimer le paramètre u
+        navigate("/messages");
+    };
 
     // Vérifier s'il y a un paramètre d'URL pour un utilisateur spécifique
     useEffect(() => {
@@ -199,7 +199,7 @@ const Messages = () => {
                                     <div
                                         key={conversation.id}
                                         className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation.id === conversation.id ? 'bg-gray-50' : ''}`}
-                                        onClick={() => setActiveConversationId(conversation.id)}
+                                        onClick={() => handleConversationChange(conversation.id)}
                                     >
                                         <Link to={`/u/${conversation.user.username}`} className="relative" onClick={(e) => e.stopPropagation()}>
                                             <Avatar className="w-10 h-10">
@@ -236,21 +236,30 @@ const Messages = () => {
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ maxHeight: "calc(100vh - 15rem)" }}>
-                                {activeConversation.messages.map((message) => (
-                                    <div key={message.id} className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                        <div
-                                            className={`max-w-[70%] px-4 py-2 rounded-2xl ${message.sender === 'me'
-                                                ? 'bg-[#EC3558] text-white rounded-tr-sm'
-                                                : 'bg-gray-100 text-gray-900 rounded-tl-sm'
-                                                }`}
-                                        >
-                                            {message.content}
-                                            <div className={`text-xs mt-1 ${message.sender === 'me' ? 'text-white/70' : 'text-gray-500'}`}>
-                                                {message.time}
-                                            </div>
+                                {activeConversation.messages.length === 0 ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="text-center text-gray-500">
+                                            <p className="mb-2 font-medium">Aucun message</p>
+                                            <p className="text-sm">Commencez la conversation</p>
                                         </div>
                                     </div>
-                                ))}
+                                ) : (
+                                    activeConversation.messages.map((message) => (
+                                        <div key={message.id} className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                                            <div
+                                                className={`max-w-[70%] px-4 py-2 rounded-2xl ${message.sender === 'me'
+                                                    ? 'bg-[#EC3558] text-white rounded-tr-sm'
+                                                    : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                                                    }`}
+                                            >
+                                                {message.content}
+                                                <div className={`text-xs mt-1 ${message.sender === 'me' ? 'text-white/70' : 'text-gray-500'}`}>
+                                                    {message.time}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                                 {/* Élément invisible pour le scroll automatique */}
                                 <div ref={messagesEndRef} />
                             </div>
