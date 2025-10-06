@@ -2,36 +2,69 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import Messages from "./pages/Messages";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const hasLoginCookie = (): boolean => {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((c) => c.trim().startsWith("login="));
+};
+
+const RequireAuth = ({ children }: { children: JSX.Element; }) => {
+  return hasLoginCookie() ? children : <Navigate to="/signin" replace />;
+};
+
+const RedirectIfAuth = ({ children }: { children: JSX.Element; }) => {
+  return hasLoginCookie() ? <Navigate to="/" replace /> : children;
+};
+
+const AppContainer = () => {
+  const location = useLocation();
+  const isAuthPage = location.pathname.startsWith("/signin") || location.pathname.startsWith("/signup");
+  const wrapperClassName = isAuthPage ? "w-full" : "w-full max-w-[1400px] mx-auto";
+
+  return (
+    <div className={wrapperClassName}>
+      <Routes>
+        {/* Root affiche Home si loggé, sinon redirige vers /signin */}
+        <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
+
+        {/* Auth pages */}
+        <Route path="/signin" element={<RedirectIfAuth><Login /></RedirectIfAuth>} />
+        <Route path="/signup" element={<RedirectIfAuth><Register /></RedirectIfAuth>} />
+
+        {/* Autres pages */}
+        <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+        <Route path="/user/:username" element={<RequireAuth><UserProfile /></RequireAuth>} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <div className="max-w-[1400px] mx-auto">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/user/:username" element={<UserProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </div>
+      <BrowserRouter>
+        <AppContainer />
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
