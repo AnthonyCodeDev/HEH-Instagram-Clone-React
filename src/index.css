@@ -121,13 +121,20 @@ All colors MUST be HSL.
     @apply bg-white;
   }
   
-  /* Désactiver le défilement du html et body en dessous de 600px */
-  @media (max-width: 599px) {
+  /* Désactiver le défilement du html et body en dessous de 650px */
+  @media (max-width: 649px) {
     html {
-      overflow: hidden;
+      overflow: hidden !important;
+      height: 100% !important;
+      position: fixed !important;
+      width: 100% !important;
+      overscroll-behavior: none !important;
     }
     body {
-      overflow: hidden;
+      overflow: hidden !important;
+      height: 100% !important;
+      position: relative !important;
+      overscroll-behavior: none !important;
     }
   }
 }

@@ -53,7 +53,7 @@ const ProfilePost = () => {
 
             <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
                 {/* Main Content */}
-                <div className="flex-1 p-6 overflow-y-auto w-full">
+                <div className="flex-1 p-6 pb-24 sm:pb-6 overflow-y-auto w-full">
                     <div className="max-w-3xl mx-auto">
                         <PostWithComments
                             post={{
