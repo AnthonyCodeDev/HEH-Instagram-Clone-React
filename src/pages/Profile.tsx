@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
+import { useBreakpointClass } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -52,9 +53,9 @@ const Profile = () => {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 flex max-w-none h-full">
+      <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 overflow-y-auto w-full">
           <div className="max-w-4xl mx-auto">
             {/* Cover Photo */}
             <div className="relative h-64 rounded-2xl overflow-hidden mb-6">
@@ -425,7 +426,7 @@ const Profile = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
           <QuickAdd />
         </div>
       </div>

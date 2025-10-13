@@ -4,6 +4,7 @@ import { Image, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
 import { Button } from "@/components/ui/button";
+import { useBreakpointClass } from "@/hooks/use-mobile";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
@@ -144,9 +145,9 @@ const Home = () => {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 flex max-w-none h-full">
+      <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 overflow-y-auto w-full">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h1
@@ -314,7 +315,7 @@ const Home = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
           <QuickAdd />
         </div>
       </div>

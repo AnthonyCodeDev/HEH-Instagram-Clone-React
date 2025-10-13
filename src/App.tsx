@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import MobileNavbar from "@/components/MobileNavbar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
@@ -34,9 +35,11 @@ const AppContainer = () => {
   const location = useLocation();
   const isAuthPage = location.pathname.startsWith("/signin") || location.pathname.startsWith("/signup");
   const wrapperClassName = isAuthPage ? "w-full" : "w-full max-w-[1400px] mx-auto";
+  const showMobileNav = !isAuthPage;
 
   return (
     <div className={wrapperClassName}>
+      {showMobileNav && <MobileNavbar />}
       <Routes>
         {/* Root affiche Home si loggé, sinon redirige vers /signin */}
         <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
@@ -59,6 +62,8 @@ const AppContainer = () => {
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {/* Ajouter un espace en bas pour éviter que le contenu ne soit caché par la barre de navigation mobile */}
+      {showMobileNav && <div className="h-16 sm:h-0 block sm:hidden"></div>}
     </div>
   );
 };

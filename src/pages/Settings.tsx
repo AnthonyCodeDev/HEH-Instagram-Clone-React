@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import QuickAdd from '@/components/QuickAdd';
+import { useBreakpointClass } from "@/hooks/use-mobile";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -273,8 +274,8 @@ const Settings = () => {
             <Sidebar />
 
             {/* Main Content */}
-            <div className="flex max-w-none h-full flex-1">
-                <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex max-w-none h-full flex-1 overflow-x-hidden">
+                <div className="flex-1 p-6 overflow-y-auto w-full">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h1
@@ -335,7 +336,7 @@ const Settings = () => {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="name">Nom complet</Label>
                                         <Input
@@ -363,7 +364,7 @@ const Settings = () => {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
                                         <div className="relative">
@@ -387,7 +388,7 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="location">Localisation</Label>
                                         <div className="relative">
@@ -486,7 +487,7 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                     <Button
                                         className="flex-1"
                                         onClick={handleSaveProfile}
@@ -505,14 +506,14 @@ const Settings = () => {
                                         <DialogTrigger asChild>
                                             <Button
                                                 variant="outline"
-                                                className="flex items-center gap-2"
+                                                className="flex items-center gap-2 justify-center"
                                                 disabled={isLoading}
                                             >
                                                 <Lock className="w-4 h-4" />
                                                 Changer le mot de passe
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px]">
+                                        <DialogContent className="sm:max-w-[425px] w-[calc(100vw-2rem)] mx-auto">
                                             <DialogHeader>
                                                 <DialogTitle>Changer le mot de passe</DialogTitle>
                                                 <DialogDescription>
@@ -582,7 +583,7 @@ const Settings = () => {
                 </div>
 
                 {/* Right Sidebar */}
-                <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+                <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
                     <QuickAdd />
                 </div>
             </div>

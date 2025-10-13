@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import forestCover from "@/assets/forest-cover.jpg";
 import { useMemo } from "react";
+import { useQuickAddBreakpoint } from "@/hooks/use-mobile";
 
 // Données fixes des profils suggérés
 const allProfiles = [
@@ -49,6 +50,15 @@ const QuickAdd = () => {
     // Sélectionner toujours les 3 premiers profils pour éviter les changements aléatoires
     return allProfiles.slice(0, 3);
   }, []);
+
+  // Vérifier si l'écran est inférieur à 1000px
+  const isBelowBreakpoint = useQuickAddBreakpoint();
+
+  // Ne pas afficher le composant si l'écran est inférieur à 1000px
+  if (isBelowBreakpoint) {
+    return null;
+  }
+
   return (
     <div className="w-full bg-white rounded-2xl shadow-card p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Ajout Rapide</h2>

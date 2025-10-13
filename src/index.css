@@ -120,6 +120,16 @@ All colors MUST be HSL.
   #root {
     @apply bg-white;
   }
+  
+  /* Désactiver le défilement du html et body en dessous de 600px */
+  @media (max-width: 599px) {
+    html {
+      overflow: hidden;
+    }
+    body {
+      overflow: hidden;
+    }
+  }
 }
 
 @layer utilities {

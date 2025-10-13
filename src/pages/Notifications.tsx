@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart, MessageCircle, UserPlus, Camera, Settings, Trash2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import QuickAdd from "@/components/QuickAdd";
+import { useBreakpointClass } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -161,9 +162,9 @@ const Notifications = () => {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 flex max-w-none h-full">
+      <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 overflow-y-auto w-full">
           <div className="w-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -265,8 +266,8 @@ const Notifications = () => {
                         {/* Post Thumbnail */}
                         {notification.postImage && (
                           <div className="ml-4 flex-shrink-0">
-                            <Link 
-                              to={`/p/${notification.user.username}-photo-${notification.id}`} 
+                            <Link
+                              to={`/p/${notification.user.username}-photo-${notification.id}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <img
@@ -304,7 +305,7 @@ const Notifications = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 p-6 flex-shrink-0 overflow-y-auto">
+        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
           <QuickAdd />
         </div>
       </div>

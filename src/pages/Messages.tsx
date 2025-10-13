@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
+import QuickAdd from "@/components/QuickAdd";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send } from "lucide-react";
+import { useBreakpointClass } from "@/hooks/use-mobile";
 
 // Données fictives pour les conversations
 const conversations = [
@@ -159,9 +161,9 @@ const Messages = () => {
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <Sidebar />
 
-            <div className="flex-1 flex max-w-none h-full">
+            <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
                 {/* Main Content */}
-                <div className="flex-1 p-6 overflow-hidden">
+                <div className="flex-1 p-6 overflow-hidden w-full">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h1
@@ -179,10 +181,10 @@ const Messages = () => {
                         </h1>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-6 h-[calc(100vh-10rem)]">
+                    <div className="grid grid-cols-12 md:grid-cols-12 grid-rows-[100px_1fr] md:grid-rows-1 gap-6 h-[calc(100vh-10rem)]">
                         {/* Conversations list */}
-                        <div className="col-span-4 bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col">
-                            <div className="p-4 border-b border-gray-100 flex-shrink-0">
+                        <div className="col-span-12 md:col-span-4 bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col md:max-h-full max-h-[100px]">
+                            <div className="p-4 border-b border-gray-100 flex-shrink-0 md:block hidden">
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -194,24 +196,24 @@ const Messages = () => {
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="divide-y divide-gray-100 overflow-y-auto flex-1" style={{ maxHeight: "calc(100vh - 15rem)" }}>
+                            <div className="divide-y divide-gray-100 overflow-y-auto flex-1 md:max-h-[calc(100vh-15rem)] flex md:flex-col flex-row flex-nowrap py-2">
                                 {filteredConversations.map((conversation) => (
                                     <div
                                         key={conversation.id}
-                                        className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation.id === conversation.id ? 'bg-gray-50' : ''}`}
+                                        className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation.id === conversation.id ? 'bg-gray-50' : ''} md:w-full w-auto md:mb-0 mb-0 flex-shrink-0`}
                                         onClick={() => handleConversationChange(conversation.id)}
                                     >
-                                        <Link to={`/u/${conversation.user.username}`} className="relative" onClick={(e) => e.stopPropagation()}>
+                                        <div className="relative flex-shrink-0">
                                             <Avatar className="w-10 h-10">
                                                 <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
                                                 <AvatarFallback>{conversation.user.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${conversation.user.status === "En ligne" ? "bg-green-500" : "bg-gray-300"}`}></div>
-                                        </Link>
-                                        <div className="flex-1 min-w-0">
-                                            <Link to={`/u/${conversation.user.username}`} className="font-medium text-gray-900 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                        </div>
+                                        <div className="flex-1 min-w-0 hidden sm:block lg:block">
+                                            <div className="font-medium text-gray-900">
                                                 {conversation.user.name}
-                                            </Link>
+                                            </div>
                                             <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
                                         </div>
                                     </div>
@@ -220,22 +222,22 @@ const Messages = () => {
                         </div>
 
                         {/* Active conversation */}
-                        <div className="col-span-8 bg-white rounded-xl border border-gray-200 flex flex-col">
+                        <div className="col-span-12 md:col-span-8 bg-white rounded-xl border border-gray-200 flex flex-col">
                             <div className="p-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-                                <Link to={`/u/${activeConversation.user.username}`}>
+                                <div>
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={activeConversation.user.avatar} alt={activeConversation.user.name} />
                                         <AvatarFallback>{activeConversation.user.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                </Link>
+                                </div>
                                 <div>
-                                    <Link to={`/u/${activeConversation.user.username}`} className="font-semibold text-gray-900 hover:underline">
+                                    <div className="font-semibold text-gray-900">
                                         {activeConversation.user.name}
-                                    </Link>
+                                    </div>
                                     <p className="text-xs text-gray-500">{activeConversation.user.status}</p>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ maxHeight: "calc(100vh - 15rem)" }}>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 md:max-h-[calc(100vh-15rem)] max-h-[calc(100vh-22rem)]">
                                 {activeConversation.messages.length === 0 ? (
                                     <div className="flex items-center justify-center h-full">
                                         <div className="text-center text-gray-500">
@@ -274,15 +276,20 @@ const Messages = () => {
                                     />
                                     <button
                                         type="submit"
-                                        className="h-11 px-5 bg-[#EC3558] text-white rounded-xl hover:bg-[#EC3558]/90 transition-colors flex items-center gap-2"
+                                        className="h-11 sm:px-5 px-3 bg-[#EC3558] text-white rounded-xl hover:bg-[#EC3558]/90 transition-colors flex items-center gap-2"
                                     >
                                         <Send className="w-4 h-4" />
-                                        Envoyer
+                                        <span className="sm:inline hidden">Envoyer</span>
                                     </button>
                                 </form>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Right Sidebar */}
+                <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
+                    <QuickAdd />
                 </div>
             </div>
         </div>
