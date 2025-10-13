@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import forestCover from "@/assets/forest-cover.jpg";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuickAddBreakpoint } from "@/hooks/use-mobile";
 
 // Données fixes des profils suggérés
@@ -45,11 +45,20 @@ const allProfiles = [
 ];
 
 const QuickAdd = () => {
-  // Utiliser useMemo pour conserver les mêmes profils entre les rendus
+  // État pour suivre le tab actif (0, 1, 2)
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Nombre de profils à afficher par page
+  const profilesPerPage = 3;
+
+  // Calculer les profils à afficher en fonction du tab actif
   const profiles = useMemo(() => {
-    // Sélectionner toujours les 3 premiers profils pour éviter les changements aléatoires
-    return allProfiles.slice(0, 3);
-  }, []);
+    const startIndex = activeTab * profilesPerPage;
+    return allProfiles.slice(startIndex, startIndex + profilesPerPage);
+  }, [activeTab]);
+
+  // Calculer le nombre total de pages
+  const totalPages = Math.ceil(allProfiles.length / profilesPerPage);
 
   // Vérifier si l'écran est inférieur à 1000px
   const isBelowBreakpoint = useQuickAddBreakpoint();
@@ -61,7 +70,26 @@ const QuickAdd = () => {
 
   return (
     <div className="w-full bg-white rounded-2xl shadow-card p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Ajout Rapide</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Ajout Rapide</h2>
+
+        {/* Tabs discrets avec zone cliquable plus large et rapprochés */}
+        <div className="flex items-center">
+          {Array.from({ length: totalPages }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveTab(index)}
+              className="w-6 h-6 flex items-center justify-center cursor-pointer"
+              aria-label={`Page ${index + 1}`}
+            >
+              <span className={`rounded-full transition-all duration-300 h-2 ${activeTab === index
+                ? 'bg-stragram-primary w-4'
+                : 'bg-gray-300 hover:bg-gray-400 w-2'
+                }`} />
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-4">
         {profiles.map((profile) => (
