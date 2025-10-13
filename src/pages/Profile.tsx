@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
-import { useBreakpointClass } from "@/hooks/use-mobile";
+import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -426,9 +425,7 @@ const Profile = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-          <QuickAdd />
-        </div>
+        <RightBar />
       </div>
     </div>
   );

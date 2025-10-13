@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
+import RightBar from "@/components/RightBar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send } from "lucide-react";
-import { useBreakpointClass } from "@/hooks/use-mobile";
 
 // Données fictives pour les conversations
 const conversations = [
@@ -288,9 +287,7 @@ const Messages = () => {
                 </div>
 
                 {/* Right Sidebar */}
-                <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-                    <QuickAdd />
-                </div>
+                <RightBar />
             </div>
         </div>
     );

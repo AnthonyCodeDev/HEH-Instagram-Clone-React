@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
-import { useBreakpointClass } from "@/hooks/use-mobile";
+import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -199,13 +198,13 @@ const UserProfile = () => {
               ) : (
                 <div className="absolute bottom-6 right-6">
                   <Button
-                    variant="outline"
-                    className="bg-white text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-full h-10 px-4"
+                    variant="default"
+                    style={{ backgroundColor: "rgb(236 53 88 / var(--tw-bg-opacity, 1))" }}
+                    className="text-white rounded-full h-10 px-6 font-medium text-sm"
                     asChild
                   >
                     <Link to={`/messages?u=${username}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                      Message
+                      ENVOYER UN MESSAGE
                     </Link>
                   </Button>
                 </div>
@@ -348,9 +347,7 @@ const UserProfile = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-          <QuickAdd />
-        </div>
+        <RightBar />
       </div>
     </div>
   );

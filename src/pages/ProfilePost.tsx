@@ -1,7 +1,6 @@
 import { useLocation, useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
-import { useBreakpointClass } from "@/hooks/use-mobile";
+import RightBar from "@/components/RightBar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
@@ -92,9 +91,7 @@ const ProfilePost = () => {
                 </div>
 
                 {/* Right Sidebar */}
-                <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-                    <QuickAdd />
-                </div>
+                <RightBar />
             </div>
         </div>
     );

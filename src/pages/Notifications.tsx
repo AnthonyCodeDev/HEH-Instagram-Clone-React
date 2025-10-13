@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, UserPlus, Camera, Settings, Trash2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
-import { useBreakpointClass } from "@/hooks/use-mobile";
+import RightBar from "@/components/RightBar";
+import MobileNavbar from "@/components/MobileNavbar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -160,12 +160,15 @@ const Notifications = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+      {/* Sidebar - hidden on mobile */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
-      <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col md:flex-row max-w-none h-full overflow-x-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-6 pb-20 sm:pb-6 overflow-y-auto w-full">
-          <div className="w-full">
+        <div className="flex-1 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto w-full">
+          <div className="w-full max-w-3xl mx-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h1
@@ -182,21 +185,22 @@ const Notifications = () => {
                 Notifications
               </h1>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {unreadCount > 0 && (
                   <Button
                     variant="ghost"
                     size="default"
                     onClick={markAllAsRead}
-                    className="text-stragram-primary hover:text-stragram-primary/80 hover:bg-stragram-primary/10 px-4 py-2"
+                    className="text-stragram-primary hover:text-stragram-primary/80 hover:bg-stragram-primary/10 px-2 sm:px-4 py-2 text-xs sm:text-sm"
                   >
-                    Tout marquer comme lu
+                    <span className="hidden sm:inline">Tout marquer comme lu</span>
+                    <span className="sm:hidden">Tout lu</span>
                   </Button>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                      <Settings className="w-6 h-6" />
+                      <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -217,14 +221,14 @@ const Notifications = () => {
               {notificationList.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`group relative bg-white rounded-2xl p-5 transition-all duration-200 hover:bg-gray-50 cursor-pointer border border-gray-100 ${!notification.read ? 'border-stragram-primary/20 bg-stragram-primary/5' : ''
+                  className={`group relative bg-white rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-5 transition-all duration-200 hover:bg-gray-50 cursor-pointer border border-gray-100 ${!notification.read ? 'border-stragram-primary/20 bg-stragram-primary/5' : ''
                     }`}
                   onClick={() => markAsRead(notification.id)}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 md:gap-4">
                     {/* User Avatar */}
                     <Link to={`/u/${notification.user.username}`} className="relative flex-shrink-0">
-                      <Avatar className="w-14 h-14 hover:scale-105 transition-transform duration-200 ring-2 ring-white shadow-sm">
+                      <Avatar className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 hover:scale-105 transition-transform duration-200 ring-2 ring-white shadow-sm">
                         <AvatarImage src={notification.user.avatar} alt={notification.user.name} />
                         <AvatarFallback className="bg-gray-100 text-gray-600 font-semibold">
                           {notification.user.name.split(' ').map(n => n[0]).join('')}
@@ -232,7 +236,7 @@ const Notifications = () => {
                       </Avatar>
 
                       {/* Notification Icon */}
-                      <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-white">
                         {getNotificationIcon(notification.type)}
                       </div>
                     </Link>
@@ -240,17 +244,17 @@ const Notifications = () => {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                             <Link
                               to={`/u/${notification.user.username}`}
-                              className="font-semibold text-gray-900 hover:text-stragram-primary transition-colors text-base"
+                              className="font-semibold text-gray-900 hover:text-stragram-primary transition-colors text-sm sm:text-base truncate max-w-[150px] sm:max-w-full"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {notification.user.name}
                             </Link>
-                            <span className="text-gray-500 text-sm">•</span>
-                            <span className="text-gray-500 text-sm">
+                            <span className="text-gray-500 text-xs sm:text-sm">•</span>
+                            <span className="text-gray-500 text-xs sm:text-sm">
                               {notification.timestamp}
                             </span>
                             {!notification.read && (
@@ -258,14 +262,14 @@ const Notifications = () => {
                             )}
                           </div>
 
-                          <p className="text-gray-700 leading-relaxed">
+                          <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                             {notification.content}
                           </p>
                         </div>
 
                         {/* Post Thumbnail */}
                         {notification.postImage && (
-                          <div className="ml-4 flex-shrink-0">
+                          <div className="ml-2 sm:ml-3 md:ml-4 flex-shrink-0">
                             <Link
                               to={`/p/${notification.user.username}-photo-${notification.id}`}
                               onClick={(e) => e.stopPropagation()}
@@ -273,14 +277,12 @@ const Notifications = () => {
                               <img
                                 src={notification.postImage}
                                 alt="Post"
-                                className="w-16 h-16 rounded-xl object-cover shadow-sm hover:shadow-md transition-shadow"
+                                className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg md:rounded-xl object-cover shadow-sm hover:shadow-md transition-shadow"
                               />
                             </Link>
                           </div>
                         )}
                       </div>
-
-                      {/* Action Buttons */}
                     </div>
                   </div>
                 </div>
@@ -289,14 +291,14 @@ const Notifications = () => {
 
             {/* Empty State */}
             {notificationList.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-gray-400" />
+              <div className="text-center py-8 md:py-12">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <Heart className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 md:mb-2">
                   Aucune notification
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm md:text-base text-gray-600 px-4">
                   Vos notifications apparaîtront ici lorsque quelqu'un interagira avec votre contenu.
                 </p>
               </div>
@@ -304,11 +306,14 @@ const Notifications = () => {
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-          <QuickAdd />
+        {/* Right Sidebar - hidden on mobile and small tablets */}
+        <div className="hidden lg:block">
+          <RightBar />
         </div>
       </div>
+
+      {/* Mobile Navigation Bar - visible only on mobile */}
+      <MobileNavbar />
     </div>
   );
 };

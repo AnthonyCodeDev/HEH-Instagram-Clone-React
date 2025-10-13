@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
-import QuickAdd from '@/components/QuickAdd';
-import { useBreakpointClass } from "@/hooks/use-mobile";
+import RightBar from '@/components/RightBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
 import {
     Dialog,
     DialogContent,
@@ -23,7 +23,8 @@ import {
     MapPin,
     Calendar,
     Link as LinkIcon,
-    Loader2
+    Loader2,
+    LogOut
 } from 'lucide-react';
 
 const Settings = () => {
@@ -291,6 +292,17 @@ const Settings = () => {
                         >
                             Paramètres
                         </h1>
+                        <div className="block sm:hidden">
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => window.location.href = '/logout'}
+                                className="flex items-center gap-2"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Déconnexion
+                            </Button>
+                        </div>
                     </div>
                     <div>
 
@@ -577,15 +589,32 @@ const Settings = () => {
                                         </DialogContent>
                                     </Dialog>
                                 </div>
+
+                                {/* Bouton de déconnexion visible uniquement sur mobile */}
+                                <div className="mt-8 sm:hidden">
+                                    <Link to="/logout">
+                                        <Button variant="destructive" className="w-full flex items-center justify-center gap-2">
+                                            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
+                                                <g clipPath="url(#clip0_2_194)">
+                                                    <path d="M16 31.5C7.4375 31.5 0.5 24.5625 0.5 16C0.5 7.4375 7.4375 0.5 16 0.5C24.5625 0.5 31.5 7.4375 31.5 16C31.5 24.5625 24.5625 31.5 16 31.5ZM17.8062 22.525L13.0875 18H24.5C25.3312 18 26 17.3312 26 16.5V15.5C26 14.6687 25.3312 14 24.5 14H13.0875L17.8062 9.475C18.4125 8.89375 18.425 7.925 17.8312 7.33125L17.1437 6.65C16.5562 6.0625 15.6062 6.0625 15.025 6.65L6.73125 14.9375C6.14375 15.525 6.14375 16.475 6.73125 17.0562L15.025 25.35C15.6125 25.9375 16.5625 25.9375 17.1437 25.35L17.8312 24.6688C18.425 24.075 18.4125 23.1062 17.8062 22.525Z" fill="white" />
+                                                </g>
+                                                <defs>
+                                                    <clipPath id="clip0_2_194">
+                                                        <rect width="32" height="32" fill="white" />
+                                                    </clipPath>
+                                                </defs>
+                                            </svg>
+                                            Déconnexion
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Sidebar */}
-                <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-                    <QuickAdd />
-                </div>
+                <RightBar />
             </div>
         </div>
     );

@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Image, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import QuickAdd from "@/components/QuickAdd";
+import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
-import { useBreakpointClass } from "@/hooks/use-mobile";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
@@ -259,7 +258,7 @@ const Home = () => {
 
                       // Mettre à jour les états des posts pour inclure le nouveau post
                       setPostStates(prevStates => [
-                        { liked: false, saved: false, likes: Math.floor(Math.random() * 50) },
+                        { liked: false, saved: false, likes: 0 },
                         ...prevStates
                       ]);
 
@@ -315,9 +314,7 @@ const Home = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className={`w-96 p-6 flex-shrink-0 overflow-y-auto ${useBreakpointClass(1000, 'hidden', '')}`}>
-          <QuickAdd />
-        </div>
+        <RightBar />
       </div>
     </div>
   );
