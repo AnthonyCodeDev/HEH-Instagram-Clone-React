@@ -37,62 +37,64 @@ const Home = () => {
     {
       id: "lucashergz20-photo-0",
       user: { name: "Lucas Hergz", username: "lucashergz20", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi laoreet libero eget lacus mattis, ut luctus augue pulvinar.",
+      content: "Dernier jour à Bali avec ce coucher de soleil à couper le souffle sur la plage de Kuta. Trois semaines de voyage qui se terminent en beauté. Difficile de quitter ce paradis, mais plein de souvenirs et de photos à partager avec vous prochainement ! #Bali #Voyage #CoucherDeSoleil",
       image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200",
       comments: [
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Magnifique coucher de soleil !" },
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Ohh superbe ! tu vois" },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Ça donne envie de voyager." },
-        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Incroyable lumière." },
-        { author: "Paul", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200", text: "Top !" },
-        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "J'adore." }
+        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Ces couleurs sont incroyables ! Tu as utilisé quel filtre ?" },
+        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Magnifique ! J'ai hâte de voir tes autres photos du voyage." },
+        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Ça donne vraiment envie d'y aller. Tu conseilles quelle période pour visiter ?" },
+        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "La lumière est parfaite sur cette photo. Tu as utilisé quel appareil ?" },
+        { author: "Paul", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200", text: "J'y étais le mois dernier ! Un endroit magique, profite bien de tes derniers moments." },
+        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "Ces couleurs sont à tomber par terre ! Bon retour parmi nous." }
       ]
     },
     {
       id: "tomberton-photo-0",
       user: { name: "Tom Berton", username: "tomberton", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
-      content: "Randonnée incroyable aujourd'hui, l'air frais fait du bien !",
+      content: "Randonnée de 15km aujourd'hui dans les Alpes du Sud. Départ à l'aube pour atteindre ce point de vue exceptionnel à 2300m d'altitude. L'effort en valait vraiment la peine ! Prochain objectif : le Mont Blanc cet été. Qui serait partant pour l'aventure ? #Randonnée #Alpes #Nature",
       image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
       comments: [
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Le spot a l'air dingue !" },
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Tu m'emmènes la prochaine ?" },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "On veut l'itinéraire !" }
+        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Le spot a l'air incroyable ! Tu peux partager l'itinéraire en MP ?" },
+        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Compte sur moi pour le Mont Blanc ! Je m'entraîne depuis des mois pour ça." },
+        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Quelle vue ! Tu utilises quelle appli pour tracer tes parcours ?" }
       ]
     },
     {
       id: "luciemarinier10-photo-0",
       user: { name: "Lucie Marinier", username: "luciemarinier10", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400" },
-      content: "Un café et c'est reparti pour créer ✨",
+      content: "Journée créative au studio aujourd'hui. Nouveau projet de design pour une marque éco-responsable qui me tient à cœur. Un bon café d'origine éthiopienne pour booster l'inspiration, et c'est parti pour une session de brainstorming ! ✨ #Design #Créativité #WorkInProgress",
       image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
       comments: [
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Team espresso ☕" },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "La tasse est trop belle !" },
-        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Ça sent la productivité." },
-        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "On bosse ensemble ?" }
+        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Team espresso pour la productivité ! Hâte de voir ce nouveau projet." },
+        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "J'adore cette tasse ! Tu l'as trouvée où ? Bon courage pour le projet." },
+        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Le café éthiopien est le meilleur pour la créativité. Tu utilises quelle méthode d'extraction ?" },
+        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "Je travaille aussi avec des marques éco-responsables. On devrait échanger sur nos expériences !" }
       ]
     },
     {
       id: "mariemaring-photo-0",
       user: { name: "Marie Marind", username: "mariemaring", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
       contentParagraphs: [
-        "Aujourd'hui, j'avais envie de quelque chose de réconfortant et simple à partager avec vous. J'ai ressorti ma vieille recette de tarte aux pommes, celle qui parfume toute la maison et qui rappelle les goûters d'automne. Une pâte bien dorée, des pommes légèrement caramélisées, une pointe de cannelle… rien de compliqué, juste le plaisir de prendre le temps.",
-        "Je vous mets la recette complète ce soir si ça vous tente. D'ailleurs, vous êtes plutôt tarte encore tiède avec une boule de glace, ou bien le lendemain au petit-déj' avec un café bien chaud ? Dites-moi, je prends toutes vos astuces pour la rendre encore meilleure !"
+        "J'ai passé l'après-midi à tester une recette de tarte aux pommes revisitée avec des ingrédients de saison. La combinaison pommes-poires avec une touche de cardamome donne un résultat surprenant et délicieux. Le secret ? Une pâte feuilletée maison au beurre de baratte et un caramel légèrement salé qui se marie parfaitement avec les fruits caramélisés.",
+        "Pour ceux qui me demandent souvent mes recettes, je publierai celle-ci en détail sur mon blog culinaire demain, avec toutes les étapes en photos. Et vous, quel est votre dessert réconfortant préféré pour l'automne ? Je cherche toujours de nouvelles inspirations pour mes prochaines créations en cuisine. #Pâtisserie #FaitmMaison #Automne"
       ],
-      image: undefined,
+      image: "https://images.unsplash.com/photo-1562007908-17c67e878c6b?w=1200",
       comments: [
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "J'arrive pour le dessert !" }
+        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "La cardamome est une super idée ! J'ai hâte de voir la recette complète sur ton blog." },
+        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Elle est magnifique ! Pour moi, c'est le crumble aux pommes et aux fruits rouges qui me réconforte en automne." },
+        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Je vais essayer ta recette ce week-end. Tu conseilles quelles variétés de pommes ?" }
       ]
     },
     {
       id: "johndoe-photo-0",
       user: { name: "John Doe", username: "johndoe", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400" },
-      content: "Nouvelle playlist dispo, dites-moi ce que vous en pensez !",
+      content: "Nouvelle playlist 'Urban Chill' disponible sur mon profil ! 2 heures de morceaux soigneusement sélectionnés entre électro minimaliste et hip-hop instrumental. Parfait pour travailler ou se détendre. N'hésitez pas à me dire ce que vous en pensez et à suggérer des artistes pour le prochain mix. Lien dans ma bio. #Musique #Playlist #UrbanChill",
       image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
       comments: [
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "J'adore le 3e titre." },
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Parfait pour courir." },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Je la mets en boucle." },
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Tu gères !" }
+        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Je l'écoute depuis ce matin ! Le morceau de Bonobo à 1h24 est incroyable." },
+        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Parfait pour mes sessions de running. Tu devrais ajouter du Tycho dans ta prochaine playlist." },
+        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "La transition entre les morceaux est super fluide. Tu utilises quel logiciel pour mixer ?" },
+        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Excellente sélection ! Tu as pensé à la mettre sur SoundCloud aussi ?" }
       ]
     }
   ]);
