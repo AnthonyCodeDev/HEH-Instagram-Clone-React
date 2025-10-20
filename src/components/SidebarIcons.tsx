@@ -1,3 +1,5 @@
+import NotificationBadge from "./NotificationBadge";
+
 // Custom SVG Icons avec conteneurs uniformes
 export const HomeIcon = ({ isActive }: { isActive: boolean; }) => (
     <div className="w-6 h-6 flex items-center justify-center">
@@ -8,10 +10,11 @@ export const HomeIcon = ({ isActive }: { isActive: boolean; }) => (
 );
 
 export const NotificationIcon = ({ isActive }: { isActive: boolean; }) => (
-    <div className="w-6 h-6 flex items-center justify-center">
+    <div className="w-6 h-6 flex items-center justify-center relative">
         <svg width="18" height="18" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15.5 31C17.6385 31 19.3732 29.2653 19.3732 27.125H11.6268C11.6268 29.2653 13.3615 31 15.5 31ZM28.5412 21.9355C27.3714 20.6786 25.1827 18.7877 25.1827 12.5938C25.1827 7.88926 21.8841 4.12324 17.4363 3.1993V1.9375C17.4363 0.867637 16.5693 0 15.5 0C14.4308 0 13.5637 0.867637 13.5637 1.9375V3.1993C9.11595 4.12324 5.81736 7.88926 5.81736 12.5938C5.81736 18.7877 3.62859 20.6786 2.45882 21.9355C2.09554 22.3261 1.93448 22.7929 1.93751 23.25C1.94417 24.243 2.72341 25.1875 3.88107 25.1875H27.119C28.2766 25.1875 29.0565 24.243 29.0625 23.25C29.0655 22.7929 28.9045 22.3254 28.5412 21.9355Z" fill={isActive ? "#252525" : "#8A96A3"} />
         </svg>
+        <NotificationBadge />
     </div>
 );
 
