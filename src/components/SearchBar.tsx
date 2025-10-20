@@ -1,69 +1,96 @@
 import { useState, useRef, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
-// Sample user data - in a real app, this would come from an API
-const users = [
-    {
-        id: 1,
-        name: "Lucas Hergz",
-        username: "lucashergz20",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-    },
-    {
-        id: 2,
-        name: "Tom Berton",
-        username: "tomberton",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"
-    },
-    {
-        id: 3,
-        name: "Lucie Marinier",
-        username: "luciemarinier10",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400"
-    },
-    {
-        id: 4,
-        name: "Marie Marind",
-        username: "mariemaring",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400"
-    },
-    {
-        id: 5,
-        name: "John Doe",
-        username: "johndoe",
-        avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400"
-    },
-    {
-        id: 6,
-        name: "Anna Smith",
-        username: "annasmith",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400"
-    }
-];
+// Type pour les utilisateurs renvoyés par l'API
+interface User {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+    bio?: string;
+}
+
+// Type pour la réponse de l'API de recherche
+interface SearchResponse {
+    users: User[];
+    page: number;
+    size: number;
+    hasMore: boolean;
+    totalElements: number;
+}
 
 const SearchBar = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [filteredUsers, setFilteredUsers] = useState<typeof users>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [totalResults, setTotalResults] = useState(0);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Filter users based on search term
-    useEffect(() => {
-        if (searchTerm.trim() === "") {
-            setFilteredUsers([]);
+    // Fonction pour rechercher des utilisateurs via l'API
+    const searchUsers = async (query: string, pageNum: number = 0, size: number = 10) => {
+        if (!query || query.trim() === "") {
+            setUsers([]);
             return;
         }
 
-        const lowercasedSearch = searchTerm.toLowerCase();
-        const results = users.filter(
-            user =>
-                user.name.toLowerCase().includes(lowercasedSearch) ||
-                user.username.toLowerCase().includes(lowercasedSearch)
-        );
-        setFilteredUsers(results);
+        try {
+            setIsLoading(true);
+            const token = localStorage.getItem('token');
+
+            // Construire l'URL avec les paramètres de recherche
+            const url = `http://localhost:8081/users/search?query=${encodeURIComponent(query)}&page=${pageNum}&size=${size}`;
+
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+
+            // Ajouter le token d'authentification s'il est disponible
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(url, { headers });
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}`);
+            }
+
+            const data: SearchResponse = await response.json();
+
+            setUsers(data.users);
+            setPage(data.page);
+            setHasMore(data.hasMore);
+            setTotalResults(data.totalElements);
+
+        } catch (error) {
+            toast({
+                title: "Erreur",
+                description: "Impossible de rechercher des utilisateurs",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Déclencher la recherche après un délai pour éviter trop de requêtes
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchTerm.trim() !== "") {
+                searchUsers(searchTerm);
+            } else {
+                setUsers([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
     // Close dropdown when clicking outside
@@ -104,9 +131,16 @@ const SearchBar = () => {
                     />
                 </div>
 
-                {isDropdownOpen && filteredUsers.length > 0 && (
+                {isDropdownOpen && (
                     <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                        {filteredUsers.map((user) => (
+                        {isLoading && (
+                            <div className="flex justify-center items-center py-4">
+                                <Loader2 className="w-5 h-5 animate-spin text-stragram-primary" />
+                                <span className="ml-2 text-sm text-gray-500">Recherche en cours...</span>
+                            </div>
+                        )}
+
+                        {!isLoading && users.length > 0 && users.map((user) => (
                             <Link
                                 key={user.id}
                                 to={`/u/${user.username}`}
@@ -118,22 +152,35 @@ const SearchBar = () => {
                             >
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-8 h-8">
-                                        <AvatarImage src={user.avatar} alt={user.name} />
+                                        <AvatarImage src={user.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"} alt={user.username} />
                                         <AvatarFallback className="bg-stragram-primary text-white text-xs">
-                                            {user.name.split(' ').map(n => n[0]).join('')}
+                                            {user.username.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-medium text-sm text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-500">@{user.username}</p>
+                                        <p className="font-medium text-sm text-gray-900">{user.username}</p>
+                                        {user.bio && <p className="text-xs text-gray-500 truncate max-w-[200px]">{user.bio}</p>}
                                     </div>
                                 </div>
                             </Link>
                         ))}
+
+                        {!isLoading && users.length > 0 && hasMore && (
+                            <div className="p-2 text-center border-t border-gray-100">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-stragram-primary hover:text-stragram-primary/80 w-full"
+                                    onClick={() => searchUsers(searchTerm, page + 1)}
+                                >
+                                    Voir plus de résultats
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {isDropdownOpen && filteredUsers.length === 0 && searchTerm.trim() !== "" && (
+                {isDropdownOpen && !isLoading && users.length === 0 && searchTerm.trim() !== "" && (
                     <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg p-4 text-center">
                         <p className="text-gray-500">Aucun utilisateur trouvé</p>
                     </div>
