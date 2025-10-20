@@ -3,17 +3,173 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import axios from "axios";
+import { toast } from "@/components/ui/use-toast";
 
 const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<{ username?: string, email?: string, password?: string; }>({});
     const navigate = useNavigate();
 
-    const handleRegister = () => {
-        const maxAgeSeconds = 60 * 60 * 24 * 7;
-        document.cookie = `login=true; Path=/; Max-Age=${maxAgeSeconds}`;
-        navigate("/", { replace: true });
+    const validateForm = () => {
+        const newErrors: { username?: string, email?: string, password?: string; } = {};
+        let isValid = true;
+
+        // Validate username (3-30 chars, only letters, numbers, dots, underscores)
+        if (!username || username.trim() === "") {
+            newErrors.username = "Le nom d'utilisateur est requis";
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9._]{3,30}$/.test(username)) {
+            newErrors.username = "Le nom d'utilisateur doit contenir entre 3 et 30 caractères (lettres, chiffres, points, underscores)";
+            isValid = false;
+        }
+
+        // Validate email - using a more strict regex for email validation
+        if (!email || email.trim() === "") {
+            newErrors.email = "L'email est requis";
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            newErrors.email = "Format d'email invalide";
+            isValid = false;
+        }
+
+        // Validate password (min 6 chars)
+        if (!password || password.length < 6) {
+            newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // Ajouter des options pour voir les détails de l'erreur
+            const response = await axios.post('http://localhost:8081/auth/register', {
+                username,
+                email,
+                password
+            }, {
+                validateStatus: function (status) {
+                    // Considérer tous les statuts comme valides pour pouvoir les traiter manuellement
+                    return true;
+                }
+            });
+
+            // Si le statut n'est pas 2xx, c'est une erreur
+            if (response.status < 200 || response.status >= 300) {
+                throw {
+                    response: response,
+                    isHandled: true
+                };
+            }
+
+            // Store JWT token and user info
+            const { token, userId, username: responseUsername } = response.data;
+            localStorage.setItem('token', token);
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('username', responseUsername);
+
+            // Set cookie for backward compatibility
+            const maxAgeSeconds = 60 * 60 * 24 * 7;
+            document.cookie = `login=true; Path=/; Max-Age=${maxAgeSeconds}`;
+
+            // Redirect to home page
+            navigate("/", { replace: true });
+        } catch (error: any) {
+            console.error('Registration error:', error);
+
+            // Afficher les détails complets de l'erreur pour le débogage
+            console.log('Error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                message: error.message
+            });
+
+            if (error.response) {
+                // Vérifier si l'erreur contient un message spécifique dans la réponse
+                const responseText = error.response.data ?
+                    (typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)) :
+                    error.response.statusText;
+
+                console.log('Response text:', responseText);
+
+                // Recherche d'erreurs spécifiques dans la réponse
+                if (responseText.includes("Invalid email format")) {
+                    setErrors({ email: "Format d'email invalide" });
+                    return;
+                }
+
+                // Handle validation errors from backend
+                if (error.response.data && error.response.data.errors) {
+                    const backendErrors = error.response.data.errors;
+                    const formattedErrors: { username?: string, email?: string, password?: string; } = {};
+
+                    backendErrors.forEach((err: any) => {
+                        if (err.field === 'username') formattedErrors.username = err.message;
+                        if (err.field === 'email') formattedErrors.email = err.message;
+                        if (err.field === 'password') formattedErrors.password = err.message;
+                    });
+
+                    setErrors(formattedErrors);
+                    return;
+                }
+
+                // Vérifier si le message d'erreur est dans data.message
+                if (error.response.data && error.response.data.message) {
+                    const errorMessage = error.response.data.message;
+
+                    // Vérifier si c'est une erreur de format d'email
+                    if (errorMessage.includes("Invalid email format")) {
+                        setErrors({ email: "Format d'email invalide" });
+                    } else {
+                        // Afficher le message d'erreur du backend
+                        toast({
+                            title: "Erreur d'inscription",
+                            description: errorMessage,
+                            variant: "destructive"
+                        });
+                    }
+                    return;
+                }
+
+                // Si on arrive ici, c'est qu'on n'a pas réussi à extraire un message d'erreur spécifique
+                // On affiche un message basé sur le code de statut HTTP
+                if (error.response.status === 400) {
+                    setErrors({ email: "Format d'email invalide ou données incorrectes" });
+                } else {
+                    toast({
+                        title: `Erreur ${error.response.status}`,
+                        description: "Une erreur s'est produite lors de l'inscription. Veuillez réessayer.",
+                        variant: "destructive"
+                    });
+                }
+            } else {
+                // Show generic error
+                toast({
+                    title: "Erreur d'inscription",
+                    description: "Une erreur s'est produite lors de l'inscription. Veuillez réessayer.",
+                    variant: "destructive"
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -56,15 +212,27 @@ const Register = () => {
                         <h2 className="text-[21.3px] leading-[26px] font-semibold tracking-[-0.035em] text-gray-900">Créer un compte</h2>
                     </div>
 
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleRegister}>
+                        <div>
+                            <Input
+                                type="text"
+                                placeholder="Nom d'utilisateur"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className={`w-full h-12 rounded-xl ${errors.username ? 'border-red-500' : 'border-gray-200'} focus:border-stragram-primary`}
+                            />
+                            {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+                        </div>
+
                         <div>
                             <Input
                                 type="email"
                                 placeholder="Adresse email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full h-12 rounded-xl border-gray-200 focus:border-stragram-primary"
+                                className={`w-full h-12 rounded-xl ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-stragram-primary`}
                             />
+                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                         </div>
 
                         <div className="relative">
@@ -73,8 +241,9 @@ const Register = () => {
                                 placeholder="Mot de passe"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full h-12 rounded-xl border-gray-200 focus:border-stragram-primary pr-12"
+                                className={`w-full h-12 rounded-xl ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:border-stragram-primary pr-12`}
                             />
+                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
@@ -89,12 +258,13 @@ const Register = () => {
                         </div>
 
                         <Button
+                            type="submit"
                             variant="stragram"
                             size="lg"
                             className="w-full bg-[#EC3558] hover:bg-[#EC3558]/90 rounded-[30.35px] py-[19.17px]"
-                            onClick={handleRegister}
+                            disabled={loading}
                         >
-                            Créer mon compte
+                            {loading ? "Inscription en cours..." : "Créer mon compte"}
                         </Button>
 
                         <div className="relative my-6">

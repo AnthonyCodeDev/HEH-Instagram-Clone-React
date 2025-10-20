@@ -1,20 +1,327 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { Image, X } from "lucide-react";
+import { Image, X, Loader2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
 import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
 
 
+// Type pour la réponse de l'API des posts récents
+interface ApiPostResponse {
+  posts: {
+    id: string;
+    authorId: string;
+    authorUsername: string;
+    authorAvatarUrl: string | null;
+    imageUrl: string | null;
+    description: string;
+    likeCount: number;
+    commentCount: number;
+    createdAt: string;
+    updatedAt: string;
+    likedByCurrentUser: boolean; // Nom correct selon la réponse de l'API
+    favoritedByCurrentUser: boolean; // Nom correct selon la réponse de l'API
+  }[];
+  page: number;
+  size: number;
+  hasMore: boolean;
+}
+
 const Home = () => {
   const [newPostText, setNewPostText] = useState("");
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
+  const [newPostFile, setNewPostFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const location = useLocation();
+
+  // Récupérer l'ID de l'utilisateur connecté
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        // Essayer d'abord de récupérer l'ID depuis le localStorage
+        const storedUserId = localStorage.getItem('userId');
+        if (storedUserId) {
+          setCurrentUserId(storedUserId);
+        }
+
+        // Ensuite, essayer de le récupérer depuis l'API
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        // Appel API silencieux
+        const response = await fetch('http://localhost:8081/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData && userData.id) {
+            setCurrentUserId(userData.id);
+            localStorage.setItem('userId', userData.id);
+          }
+        } else {
+          // En cas d'erreur, utiliser l'ID du localStorage (déjà fait)
+        }
+      } catch (error) {
+        // Gérer silencieusement l'erreur
+        // L'ID du localStorage est déjà utilisé si disponible
+      }
+    };
+
+    getUserId();
+  }, []);
+
+  // Fonction pour récupérer les posts récents depuis l'API
+  const fetchRecentPosts = useCallback(async (page: number = 0, size: number = 10) => {
+    try {
+      // Récupérer le token JWT depuis le localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      // console.log(`Requête API: GET /posts/recent?page=${page}&size=${size}`);
+      // console.log('Token utilisé:', token.substring(0, 10) + '...');
+
+      const response = await fetch(`http://localhost:8081/posts/recent?page=${page}&size=${size}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      const data = await response.json() as ApiPostResponse;
+      // console.log('Réponse API complète:', data);
+
+      // Vérifier spécifiquement les valeurs de likedByCurrentUser
+      data.posts.forEach(post => {
+        // console.log(`Post ${post.id} - likedByCurrentUser:`, post.likedByCurrentUser,
+        //   `(type: ${typeof post.likedByCurrentUser})`);
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des posts récents:', error);
+      throw error;
+    }
+  }, []);
+
+  // Fonction pour envoyer un post à l'API
+  const sendPostToAPI = async (imageFile: File | null, description: string) => {
+    try {
+      // Récupérer le token JWT depuis le localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      // Créer un objet FormData
+      const formData = new FormData();
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      formData.append('description', description);
+
+      // Envoyer la requête à l'API
+      const response = await fetch('http://localhost:8081/posts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du post:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour liker un post
+  const likePost = async (postId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(`http://localhost:8081/posts/${postId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour unliker un post
+  const unlikePost = async (postId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(`http://localhost:8081/posts/${postId}/like`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      // La réponse est vide avec un statut 204
+      return true;
+    } catch (error) {
+      console.error('Erreur lors du unlike:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour supprimer un post
+  const deletePost = async (postId: string): Promise<void> => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      // Trouver l'index du post à supprimer avant de le supprimer
+      const postIndex = posts.findIndex(post => post.id === postId);
+      if (postIndex === -1) {
+        throw new Error('Post non trouvé');
+      }
+
+      // Déclencher immédiatement l'animation de suppression
+      setPosts(prevPosts => {
+        const updatedPosts = [...prevPosts];
+        if (updatedPosts[postIndex]) {
+          updatedPosts[postIndex] = { ...updatedPosts[postIndex], isDeleting: true };
+        }
+        return updatedPosts;
+      });
+
+      // Faire l'appel API en parallèle avec l'animation
+      const apiCall = fetch(`http://localhost:8081/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Attendre que l'animation soit bien visible (durée plus courte)
+      const animationDelay = new Promise(resolve => setTimeout(resolve, 300));
+
+      // Attendre que les deux promesses soient résolues
+      const [response] = await Promise.all([apiCall, animationDelay]);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      // Supprimer le post de l'état local après l'animation
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      setPostStates(prevStates => prevStates.filter((_, idx) => posts[idx].id !== postId));
+    } catch (error) {
+      // Gérer silencieusement l'erreur
+      throw error;
+    }
+  };
+
+  // Fonction pour ajouter un post aux favoris
+  const favoritePost = async (postId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(`http://localhost:8081/posts/${postId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout aux favoris:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour retirer un post des favoris
+  const unfavoritePost = async (postId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(`http://localhost:8081/posts/${postId}/favorite`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Erreur ${response.status}`);
+      }
+
+      // La réponse est vide avec un statut 204
+      return true;
+    } catch (error) {
+      console.error('Erreur lors du retrait des favoris:', error);
+      throw error;
+    }
+  };
 
   // Effet pour gérer le focus initial si nécessaire
   useEffect(() => {
@@ -33,113 +340,315 @@ const Home = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // State pour les posts
-  const [posts, setPosts] = useState([
-    {
-      id: "lucashergz20-photo-0",
-      user: { name: "Lucas Hergz", username: "lucashergz20", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-      content: "Dernier jour à Bali avec ce coucher de soleil à couper le souffle sur la plage de Kuta. Trois semaines de voyage qui se terminent en beauté. Difficile de quitter ce paradis, mais plein de souvenirs et de photos à partager avec vous prochainement ! #Bali #Voyage #CoucherDeSoleil",
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200",
-      comments: [
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Ces couleurs sont incroyables ! Tu as utilisé quel filtre ?" },
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Magnifique ! J'ai hâte de voir tes autres photos du voyage." },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Ça donne vraiment envie d'y aller. Tu conseilles quelle période pour visiter ?" },
-        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "La lumière est parfaite sur cette photo. Tu as utilisé quel appareil ?" },
-        { author: "Paul", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200", text: "J'y étais le mois dernier ! Un endroit magique, profite bien de tes derniers moments." },
-        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "Ces couleurs sont à tomber par terre ! Bon retour parmi nous." }
-      ]
-    },
-    {
-      id: "tomberton-photo-0",
-      user: { name: "Tom Berton", username: "tomberton", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
-      content: "Randonnée de 15km aujourd'hui dans les Alpes du Sud. Départ à l'aube pour atteindre ce point de vue exceptionnel à 2300m d'altitude. L'effort en valait vraiment la peine ! Prochain objectif : le Mont Blanc cet été. Qui serait partant pour l'aventure ? #Randonnée #Alpes #Nature",
-      image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
-      comments: [
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Le spot a l'air incroyable ! Tu peux partager l'itinéraire en MP ?" },
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Compte sur moi pour le Mont Blanc ! Je m'entraîne depuis des mois pour ça." },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "Quelle vue ! Tu utilises quelle appli pour tracer tes parcours ?" }
-      ]
-    },
-    {
-      id: "luciemarinier10-photo-0",
-      user: { name: "Lucie Marinier", username: "luciemarinier10", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400" },
-      content: "Journée créative au studio aujourd'hui. Nouveau projet de design pour une marque éco-responsable qui me tient à cœur. Un bon café d'origine éthiopienne pour booster l'inspiration, et c'est parti pour une session de brainstorming ! ✨ #Design #Créativité #WorkInProgress",
-      image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
-      comments: [
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Team espresso pour la productivité ! Hâte de voir ce nouveau projet." },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "J'adore cette tasse ! Tu l'as trouvée où ? Bon courage pour le projet." },
-        { author: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200", text: "Le café éthiopien est le meilleur pour la créativité. Tu utilises quelle méthode d'extraction ?" },
-        { author: "Nina", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200", text: "Je travaille aussi avec des marques éco-responsables. On devrait échanger sur nos expériences !" }
-      ]
-    },
-    {
-      id: "mariemaring-photo-0",
-      user: { name: "Marie Marind", username: "mariemaring", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400" },
-      contentParagraphs: [
-        "J'ai passé l'après-midi à tester une recette de tarte aux pommes revisitée avec des ingrédients de saison. La combinaison pommes-poires avec une touche de cardamome donne un résultat surprenant et délicieux. Le secret ? Une pâte feuilletée maison au beurre de baratte et un caramel légèrement salé qui se marie parfaitement avec les fruits caramélisés.",
-        "Pour ceux qui me demandent souvent mes recettes, je publierai celle-ci en détail sur mon blog culinaire demain, avec toutes les étapes en photos. Et vous, quel est votre dessert réconfortant préféré pour l'automne ? Je cherche toujours de nouvelles inspirations pour mes prochaines créations en cuisine. #Pâtisserie #FaitmMaison #Automne"
-      ],
-      image: "https://images.unsplash.com/photo-1562007908-17c67e878c6b?w=1200",
-      comments: [
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "La cardamome est une super idée ! J'ai hâte de voir la recette complète sur ton blog." },
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Elle est magnifique ! Pour moi, c'est le crumble aux pommes et aux fruits rouges qui me réconforte en automne." },
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Je vais essayer ta recette ce week-end. Tu conseilles quelles variétés de pommes ?" }
-      ]
-    },
-    {
-      id: "johndoe-photo-0",
-      user: { name: "John Doe", username: "johndoe", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400" },
-      content: "Nouvelle playlist 'Urban Chill' disponible sur mon profil ! 2 heures de morceaux soigneusement sélectionnés entre électro minimaliste et hip-hop instrumental. Parfait pour travailler ou se détendre. N'hésitez pas à me dire ce que vous en pensez et à suggérer des artistes pour le prochain mix. Lien dans ma bio. #Musique #Playlist #UrbanChill",
-      image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
-      comments: [
-        { author: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200", text: "Je l'écoute depuis ce matin ! Le morceau de Bonobo à 1h24 est incroyable." },
-        { author: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200", text: "Parfait pour mes sessions de running. Tu devrais ajouter du Tycho dans ta prochaine playlist." },
-        { author: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200", text: "La transition entre les morceaux est super fluide. Tu utilises quel logiciel pour mixer ?" },
-        { author: "Lucas", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200", text: "Excellente sélection ! Tu as pensé à la mettre sur SoundCloud aussi ?" }
-      ]
-    }
-  ]);
+  const [posts, setPosts] = useState<PostData[]>([]);
 
   // Per-post UI state (like/save)
-  const [postStates, setPostStates] = useState(
-    posts.map((_, idx) => ({ liked: false, saved: false, likes: 200 + idx * 17 }))
-  );
+  const [postStates, setPostStates] = useState<{ liked: boolean; saved: boolean; likes: number; }[]>([]);
+
+  // Charger les posts récents au chargement de la page
+  useEffect(() => {
+    const loadRecentPosts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchRecentPosts(currentPage);
+
+        // Convertir les données de l'API
+
+        // Convertir les données de l'API au format attendu par le composant PostWithComments
+        const formattedPosts = data.posts.map(post => ({
+          id: post.id,
+          authorId: post.authorId, // Ajouter l'ID de l'auteur directement dans le post
+          user: {
+            id: post.authorId, // Ajouter l'ID de l'auteur dans l'objet user
+            name: post.authorUsername, // Utiliser le nom d'utilisateur comme nom complet
+            username: post.authorUsername,
+            avatar: post.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+          },
+          content: post.description,
+          image: post.imageUrl,
+          comments: [] // Les commentaires seront chargés séparément si nécessaire
+        }));
+
+        setPosts(formattedPosts);
+        setHasMorePosts(data.hasMore);
+
+        // Initialiser les états des posts en s'assurant que les valeurs sont correctes
+        const postStatesFromAPI = data.posts.map(post => {
+          // Convertir explicitement en booléen pour éviter les problèmes de type
+          const isLiked = post.likedByCurrentUser === true;
+          const isSaved = post.favoritedByCurrentUser === true;
+
+
+          return {
+            liked: isLiked,
+            saved: isSaved,
+            likes: post.likeCount || 0 // S'assurer qu'il y a toujours une valeur
+          };
+        });
+
+        setPostStates(postStatesFromAPI);
+      } catch (error) {
+        console.error("Erreur lors du chargement des posts récents:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les posts récents",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecentPosts();
+  }, [fetchRecentPosts, currentPage]);
 
   // Mettre à jour les états des posts quand posts change
   useEffect(() => {
     // Éviter de référencer postStates dans l'effet pour éviter les boucles
-    setPostStates(prevStates => {
-      // S'assurer que nous avons un état pour chaque post
-      const newStates = posts.map((post, idx) => {
-        // Conserver les états existants si disponibles
-        if (idx < prevStates.length) {
-          return prevStates[idx];
-        }
-        // Sinon, créer un nouvel état pour les nouveaux posts
-        return { liked: false, saved: false, likes: 0 };
+    if (posts.length > 0 && postStates.length !== posts.length) {
+      setPostStates(prevStates => {
+        // S'assurer que nous avons un état pour chaque post
+        const newStates = posts.map((post, idx) => {
+          // Conserver les états existants si disponibles
+          if (idx < prevStates.length) {
+            return prevStates[idx];
+          }
+          // Sinon, créer un nouvel état pour les nouveaux posts
+          return { liked: false, saved: false, likes: 0 };
+        });
+        return newStates;
       });
-      return newStates;
-    });
-  }, [posts.length]);
+    }
+  }, [posts.length, postStates.length]);
 
-  const toggleLike = (index: number) => {
-    setPostStates((prev) => {
-      const next = [...prev];
-      const wasLiked = next[index].liked;
-      next[index] = {
-        ...next[index],
-        liked: !wasLiked,
-        likes: next[index].likes + (wasLiked ? -1 : 1),
-      };
-      return next;
-    });
+  // État pour suivre les posts en cours de like/unlike et favorite/unfavorite
+  const [likingPosts, setLikingPosts] = useState<Record<string, boolean>>({});
+  const [savingPosts, setSavingPosts] = useState<Record<string, boolean>>({});
+
+  const toggleLike = async (index: number) => {
+    const post = posts[index];
+    if (!post || likingPosts[post.id]) return; // Éviter les clics multiples
+
+    try {
+      // Récupérer l'état actuel du like avant toute modification
+      const currentlyLiked = postStates[index].liked;
+
+      // Marquer ce post comme en cours de like/unlike
+      setLikingPosts(prev => ({ ...prev, [post.id]: true }));
+
+      // Mise à jour optimiste de l'UI
+      setPostStates((prev) => {
+        const next = [...prev];
+        const newLikedState = !currentlyLiked;
+        // console.log(`Mise à jour optimiste: ${currentlyLiked ? 'liké' : 'non liké'} -> ${newLikedState ? 'liké' : 'non liké'}`);
+
+        next[index] = {
+          ...next[index],
+          liked: newLikedState,
+          likes: next[index].likes + (currentlyLiked ? -1 : 1),
+        };
+        return next;
+      });
+
+      // Appel à l'API
+      if (currentlyLiked) {
+        // Le post était déjà liké, on l'unlike
+        // console.log(`Appel API: unlike post ${post.id}`);
+        await unlikePost(post.id);
+      } else {
+        // Le post n'était pas liké, on le like
+        // console.log(`Appel API: like post ${post.id}`);
+        await likePost(post.id);
+      }
+    } catch (error) {
+      console.error('Erreur lors du toggle like:', error);
+
+      // En cas d'erreur, annuler la mise à jour optimiste
+      setPostStates((prev) => {
+        const next = [...prev];
+        const currentlyLiked = next[index].liked;
+        next[index] = {
+          ...next[index],
+          liked: !currentlyLiked,
+          likes: next[index].likes + (currentlyLiked ? 1 : -1),
+        };
+        return next;
+      });
+
+      // Rafraîchir les données du post depuis l'API pour s'assurer de la cohérence
+      try {
+        const updatedPostData = await fetchRecentPosts(currentPage, 1);
+        const updatedPost = updatedPostData.posts.find(p => p.id === post.id);
+        if (updatedPost) {
+          // Mettre à jour l'état du like avec les données fraîches du serveur
+          setPostStates(prev => {
+            const next = [...prev];
+            next[index] = {
+              ...next[index],
+              liked: updatedPost.likedByCurrentUser === true,
+              likes: updatedPost.likeCount
+            };
+            return next;
+          });
+        }
+      } catch (refreshError) {
+        console.error('Erreur lors du rafraîchissement des données du post:', refreshError);
+      }
+
+      // Afficher un message d'erreur
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le like",
+        variant: "destructive"
+      });
+    } finally {
+      // Récupérer l'état actuel du post depuis l'API pour s'assurer de la cohérence
+      try {
+        // Attendre un peu pour que le serveur ait le temps de traiter la requête précédente
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Récupérer les données fraîches du post
+        const token = localStorage.getItem('token');
+        if (token) {
+          // console.log(`Vérification de l'état du post ${post.id} après like/unlike`);
+          const response = await fetch(`http://localhost:8081/posts/${post.id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const updatedPost = await response.json();
+            // console.log('Post mis à jour depuis l\'API:', updatedPost);
+            // console.log(`État du like: ${updatedPost.isLikedByCurrentUser ? 'liké' : 'non liké'}`);
+
+            // Mettre à jour l'état du post avec les données fraîches
+            setPostStates(prev => {
+              const next = [...prev];
+              next[index] = {
+                ...next[index],
+                liked: updatedPost.likedByCurrentUser === true,
+                likes: updatedPost.likeCount || 0
+              };
+              return next;
+            });
+          }
+        }
+      } catch (refreshError) {
+        console.error('Erreur lors de la vérification de l\'\u00e9tat du post:', refreshError);
+      }
+
+      // Marquer ce post comme n'étant plus en cours de like/unlike
+      setLikingPosts(prev => {
+        const next = { ...prev };
+        delete next[post.id];
+        return next;
+      });
+    }
   };
 
-  const toggleSave = (index: number) => {
-    setPostStates((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], saved: !next[index].saved };
-      return next;
-    });
+  const toggleSave = async (index: number) => {
+    const post = posts[index];
+    if (!post || savingPosts[post.id]) return; // Éviter les clics multiples
+
+    try {
+      // Récupérer l'état actuel du favori avant toute modification
+      const currentlySaved = postStates[index].saved;
+      // console.log(`Toggle favori pour le post ${post.id} - État actuel: ${currentlySaved ? 'favori' : 'non favori'}`);
+
+      // Marquer ce post comme en cours de favorite/unfavorite
+      setSavingPosts(prev => ({ ...prev, [post.id]: true }));
+
+      // Mise à jour optimiste de l'UI
+      setPostStates((prev) => {
+        const next = [...prev];
+        const newSavedState = !currentlySaved;
+        // console.log(`Mise à jour optimiste: ${currentlySaved ? 'favori' : 'non favori'} -> ${newSavedState ? 'favori' : 'non favori'}`);
+
+        next[index] = {
+          ...next[index],
+          saved: newSavedState
+        };
+        return next;
+      });
+
+      // Appel à l'API
+      if (currentlySaved) {
+        // Le post était déjà en favori, on le retire
+        // console.log(`Appel API: unfavorite post ${post.id}`);
+        await unfavoritePost(post.id);
+      } else {
+        // Le post n'était pas en favori, on l'ajoute
+        // console.log(`Appel API: favorite post ${post.id}`);
+        await favoritePost(post.id);
+      }
+    } catch (error) {
+      console.error('Erreur lors du toggle favori:', error);
+
+      // En cas d'erreur, annuler la mise à jour optimiste
+      setPostStates((prev) => {
+        const next = [...prev];
+        const currentlySaved = next[index].saved;
+        next[index] = {
+          ...next[index],
+          saved: !currentlySaved
+        };
+        return next;
+      });
+
+      // Afficher un message d'erreur
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le favori",
+        variant: "destructive"
+      });
+    } finally {
+      // Récupérer l'état actuel du post depuis l'API pour s'assurer de la cohérence
+      try {
+        // Attendre un peu pour que le serveur ait le temps de traiter la requête précédente
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Récupérer les données fraîches du post
+        const token = localStorage.getItem('token');
+        if (token) {
+          // console.log(`Vérification de l'état du post ${post.id} après favorite/unfavorite`);
+          const response = await fetch(`http://localhost:8081/posts/${post.id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const updatedPost = await response.json();
+            // console.log('Post mis à jour depuis l\'API:', updatedPost);
+            // console.log(`État du favori: ${updatedPost.favoritedByCurrentUser ? 'favori' : 'non favori'}`);
+
+            // Mettre à jour l'état du post avec les données fraîches
+            setPostStates(prev => {
+              const next = [...prev];
+              next[index] = {
+                ...next[index],
+                saved: updatedPost.favoritedByCurrentUser === true
+              };
+              return next;
+            });
+          }
+        }
+      } catch (refreshError) {
+        console.error('Erreur lors de la vérification de l\'\u00e9tat du post:', refreshError);
+      }
+
+      // Marquer ce post comme n'étant plus en cours de favorite/unfavorite
+      setSavingPosts(prev => {
+        const next = { ...prev };
+        delete next[post.id];
+        return next;
+      });
+    }
   };
 
   return (
@@ -213,6 +722,8 @@ const Home = () => {
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
                       const file = e.target.files[0];
+                      setNewPostFile(file); // Stocker le fichier pour l'envoi API
+
                       const reader = new FileReader();
                       reader.onload = (event) => {
                         if (event.target?.result) {
@@ -228,33 +739,50 @@ const Home = () => {
                   size="icon"
                   className="text-stragram-primary hover:text-stragram-primary/80"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
                 >
                   <Image className="w-5 h-5" />
                 </Button>
 
                 <button
-                  className="w-24 h-9 bg-[#EC3558] text-white text-sm font-medium rounded-[11px] hover:bg-[#EC3558]/90 transition-colors"
-                  onClick={(e) => {
+                  className="w-24 h-9 bg-[#EC3558] text-white text-sm font-medium rounded-[11px] hover:bg-[#EC3558]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || (!newPostText.trim() && !newPostFile)}
+                  onClick={async (e) => {
                     // Empêcher le comportement par défaut du bouton
                     e.preventDefault();
 
                     // Vérifier qu'il y a du contenu à publier
-                    if (!newPostText.trim() && !newPostImage) return;
+                    if (!newPostText.trim() && !newPostFile) {
+                      toast({
+                        title: "Erreur",
+                        description: "Veuillez ajouter du texte ou une image pour votre post",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
 
-                    // Créer un nouveau post
-                    const newPost = {
-                      id: `bahsonnom-photo-${new Date().getTime()}`,
-                      user: {
-                        name: "Bahson Nom",
-                        username: "bahsonnom",
-                        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
-                      },
-                      content: newPostText.trim(),
-                      image: newPostImage || undefined,
-                      comments: []
-                    };
+                    setIsSubmitting(true);
 
                     try {
+                      // Envoyer le post à l'API (avec ou sans image)
+                      const postData = await sendPostToAPI(newPostFile, newPostText.trim());
+
+                      // Créer un nouveau post avec les données de l'API
+                      const newPost = {
+                        id: postData.id,
+                        authorId: postData.authorId || currentUserId, // Ajouter l'ID de l'auteur
+                        user: {
+                          id: postData.authorId || currentUserId, // Ajouter l'ID de l'auteur dans l'objet user
+                          name: postData.authorUsername, // Utiliser les données de l'API
+                          username: postData.authorUsername,
+                          avatar: postData.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+                        },
+                        content: postData.description,
+                        image: postData.imageUrl, // Peut être undefined si pas d'image
+                        comments: [],
+                        commentCount: 0 // Initialiser le compteur de commentaires
+                      };
+
                       // Ajouter le nouveau post au début du flux
                       setPosts(prevPosts => [newPost, ...prevPosts]);
 
@@ -264,33 +792,73 @@ const Home = () => {
                         ...prevStates
                       ]);
 
+                      toast({
+                        title: "Succès",
+                        description: "Votre post a été publié"
+                      });
+
                       // Reset form
                       setNewPostText("");
                       setNewPostImage(null);
+                      setNewPostFile(null);
                       // Réinitialiser l'input file
                       if (fileInputRef.current) {
                         fileInputRef.current.value = '';
                       }
                     } catch (error) {
                       console.error("Erreur lors de la publication:", error);
+                      toast({
+                        title: "Erreur",
+                        description: error instanceof Error ? error.message : "Erreur lors de la publication",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setIsSubmitting(false);
                     }
                   }}
                 >
-                  Publier
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Envoi...
+                    </>
+                  ) : (
+                    "Publier"
+                  )}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Feed - posts variés */}
+          {/* État de chargement initial */}
+          {isLoading && posts.length === 0 && (
+            <div className="flex justify-center items-center py-10">
+              <Loader2 className="w-8 h-8 animate-spin text-stragram-primary" />
+              <span className="ml-2 text-gray-600">Chargement des posts...</span>
+            </div>
+          )}
+
+          {/* Message si aucun post */}
+          {!isLoading && posts.length === 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 text-center">
+              <p className="text-gray-600">Aucun post à afficher pour le moment.</p>
+              <p className="text-gray-500 text-sm mt-2">Soyez le premier à publier quelque chose !</p>
+            </div>
+          )}
+
+          {/* Feed - posts récents */}
           {posts.map((post, i) => (
             <PostWithComments
-              key={post.user.username + i}
+              key={post.id || `${post.user.username}-${i}`}
               post={post as PostData}
               postState={postStates[i]}
               postIndex={i}
               onLike={toggleLike}
               onSave={toggleSave}
+              onDeletePost={deletePost}
+              isLiking={likingPosts}
+              isSaving={savingPosts}
+              currentUserId={currentUserId}
               onAddComment={(postIndex, comment) => {
                 setPosts(prevPosts => {
                   const newPosts = [...prevPosts];
@@ -305,6 +873,73 @@ const Home = () => {
               }}
             />
           ))}
+
+          {/* Bouton "Charger plus" pour la pagination */}
+          {!isLoading && hasMorePosts && (
+            <div className="flex justify-center my-6">
+              <Button
+                onClick={async () => {
+                  try {
+                    setLoadingMorePosts(true);
+                    const nextPage = currentPage + 1;
+                    const data = await fetchRecentPosts(nextPage);
+
+                    // Convertir et ajouter les nouveaux posts
+                    const formattedPosts = data.posts.map(post => ({
+                      id: post.id,
+                      user: {
+                        name: post.authorUsername,
+                        username: post.authorUsername,
+                        avatar: post.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+                      },
+                      content: post.description,
+                      image: post.imageUrl,
+                      comments: []
+                    }));
+
+                    setPosts(prev => [...prev, ...formattedPosts]);
+                    setCurrentPage(nextPage);
+                    setHasMorePosts(data.hasMore);
+
+                    // Ajouter les états des nouveaux posts
+                    setPostStates(prev => [...prev, ...data.posts.map(post => ({
+                      liked: post.likedByCurrentUser === true,
+                      saved: post.favoritedByCurrentUser === true,
+                      likes: post.likeCount || 0
+                    }))]);
+                  } catch (error) {
+                    console.error("Erreur lors du chargement de plus de posts:", error);
+                    toast({
+                      title: "Erreur",
+                      description: "Impossible de charger plus de posts",
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setLoadingMorePosts(false);
+                  }
+                }}
+                disabled={loadingMorePosts}
+                variant="outline"
+                className="w-40"
+              >
+                {loadingMorePosts ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Chargement...
+                  </>
+                ) : (
+                  "Voir plus de posts"
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Indicateur de fin de liste */}
+          {!isLoading && !hasMorePosts && posts.length > 0 && (
+            <div className="text-center text-gray-500 my-6">
+              Vous avez vu tous les posts récents
+            </div>
+          )}
 
           <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
             <DialogContent variant="bare">

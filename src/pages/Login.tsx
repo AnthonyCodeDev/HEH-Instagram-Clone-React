@@ -4,19 +4,109 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import axios from "axios";
 import logoImage from "@/assets/stragram-logo.png";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ usernameOrEmail?: string; password?: string; }>({});
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Simple login cookie for demo purposes
-    const maxAgeSeconds = 60 * 60 * 24 * 7; // 7 jours
-    document.cookie = `login=true; Path=/; Max-Age=${maxAgeSeconds}`;
-    navigate("/", { replace: true });
+  const validateForm = () => {
+    const newErrors: { usernameOrEmail?: string; password?: string; } = {};
+    let isValid = true;
+
+    // Valider usernameOrEmail
+    if (!usernameOrEmail || usernameOrEmail.trim() === "") {
+      newErrors.usernameOrEmail = "Nom d'utilisateur ou email requis";
+      isValid = false;
+    }
+
+    // Valider password
+    if (!password || password.trim() === "") {
+      newErrors.password = "Mot de passe requis";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post('http://localhost:8081/auth/login', {
+        usernameOrEmail,
+        password
+      });
+
+      // Stocker le token JWT et les informations utilisateur
+      const { token, userId, username } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('username', username);
+
+      // Définir un cookie pour la compatibilité avec le code existant
+      const maxAgeSeconds = 60 * 60 * 24 * 7; // 7 jours
+      document.cookie = `login=true; Path=/; Max-Age=${maxAgeSeconds}`;
+
+      // Rediriger vers la page d'accueil
+      navigate("/", { replace: true });
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          // Erreur d'authentification
+          setErrors({
+            usernameOrEmail: "Nom d'utilisateur/email ou mot de passe incorrect",
+            password: "Nom d'utilisateur/email ou mot de passe incorrect"
+          });
+
+          toast({
+            title: "Échec de la connexion",
+            description: "Identifiants incorrects",
+            variant: "destructive"
+          });
+        } else if (error.response.data && error.response.data.message) {
+          // Afficher le message d'erreur spécifique du backend
+          const errorMessage = error.response.data.message;
+
+          toast({
+            title: "Erreur de connexion",
+            description: errorMessage,
+            variant: "destructive"
+          });
+        } else {
+          // Erreur générale avec code HTTP
+          toast({
+            title: `Erreur ${error.response.status}`,
+            description: "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        // Erreur générale sans réponse HTTP
+        toast({
+          title: "Erreur de connexion",
+          description: "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,15 +149,16 @@ const Login = () => {
             <h2 className="text-[21.3px] leading-[26px] font-semibold tracking-[-0.035em] text-gray-900">Connexion</h2>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <Input
-                type="email"
-                placeholder="Adresse email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-12 rounded-xl border-gray-200 focus:border-stragram-primary"
+                type="text"
+                placeholder="Nom d'utilisateur ou email"
+                value={usernameOrEmail}
+                onChange={(e) => setUsernameOrEmail(e.target.value)}
+                className={`w-full h-12 rounded-xl ${errors.usernameOrEmail ? 'border-red-500' : 'border-gray-200'} focus:border-stragram-primary`}
               />
+              {errors.usernameOrEmail && <p className="text-red-500 text-xs mt-1">{errors.usernameOrEmail}</p>}
             </div>
 
             <div className="relative">
@@ -76,8 +167,9 @@ const Login = () => {
                 placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 rounded-xl border-gray-200 focus:border-stragram-primary pr-12"
+                className={`w-full h-12 rounded-xl ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:border-stragram-primary pr-12`}
               />
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -92,12 +184,13 @@ const Login = () => {
             </div>
 
             <Button
+              type="submit"
               variant="stragram"
               size="lg"
               className="w-full bg-[#EC3558] hover:bg-[#EC3558]/90 rounded-[30.35px] py-[19.17px]"
-              onClick={handleLogin}
+              disabled={loading}
             >
-              Connexion
+              {loading ? "Connexion en cours..." : "Connexion"}
             </Button>
 
             <div className="text-center space-y-4">
