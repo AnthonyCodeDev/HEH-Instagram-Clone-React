@@ -161,18 +161,23 @@ const PostWithComments = ({
             const data = await response.json();
             // console.log('Commentaires reçus:', data);
 
-            // Convertir les commentaires de l'API au format attendu par le composant
+            // Convertir les commentaires de l'API au format attendu par le composant et les trier
             const formattedComments = data.comments.map((comment: ApiCommentResponse) => ({
                 id: comment.id,
                 author: comment.authorUsername,
                 avatar: comment.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
                 text: comment.text,
                 createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt, // Ajouter updatedAt pour le tri
                 authorId: comment.authorId,
                 authorUsername: comment.authorUsername,
                 authorAvatarUrl: comment.authorAvatarUrl,
                 postId: comment.postId
-            }));
+            })).sort((a, b) => {
+                const dateA = new Date(a.updatedAt || a.createdAt);
+                const dateB = new Date(b.updatedAt || b.createdAt);
+                return dateB.getTime() - dateA.getTime();
+            });
 
             return {
                 comments: formattedComments,
@@ -574,7 +579,15 @@ const PostWithComments = ({
                                         setIsLoadingComments(true);
                                         fetchComments(post.id, commentsPage + 1)
                                             .then(result => {
-                                                setComments(prev => [...prev, ...result.comments]);
+                                                setComments(prev => {
+                                                    const allComments = [...prev, ...result.comments];
+                                                    // Trier tous les commentaires par updatedAt
+                                                    return allComments.sort((a, b) => {
+                                                        const dateA = new Date(a.updatedAt || a.createdAt || 0);
+                                                        const dateB = new Date(b.updatedAt || b.createdAt || 0);
+                                                        return dateB.getTime() - dateA.getTime();
+                                                    });
+                                                });
                                                 setHasMoreComments(result.hasMore);
                                                 setCommentsPage(result.page);
                                                 setVisible(v => v + 5);

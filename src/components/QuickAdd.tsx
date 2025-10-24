@@ -1,64 +1,57 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import forestCover from "@/assets/forest-cover.jpg";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuickAddBreakpoint } from "@/hooks/use-mobile";
+import { userService } from "@/services/userService";
+import type { UserResponse } from "@/types/user";
+import { Loader2 } from "lucide-react";
 
-// Données fixes des profils suggérés
-const allProfiles = [
-  {
-    id: 1,
-    name: "Tom Berton",
-    username: "tomberton",
-    coverImage: forestCover,
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-  },
-  {
-    id: 2,
-    name: "Lucie Marinier",
-    username: "luciemarinier10",
-    coverImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400",
-  },
-  {
-    id: 3,
-    name: "Marie Marind",
-    username: "mariemaring",
-    coverImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
-  },
-  {
-    id: 4,
-    name: "John Doe",
-    username: "johndoe",
-    coverImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800",
-    avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=400",
-  },
-  {
-    id: 5,
-    name: "Anna Smith",
-    username: "annasmith",
-    coverImage: "https://images.unsplash.com/photo-1505144808419-1957a94ca61e?w=800",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-  }
-];
+// Image par défaut si aucune image de couverture n'est fournie
+const DEFAULT_COVER = "/src/assets/default-background.png";
 
 const QuickAdd = () => {
-  // État pour suivre le tab actif (0, 1, 2)
   const [activeTab, setActiveTab] = useState(0);
+  const [profiles, setProfiles] = useState<UserResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Nombre de profils à afficher par page
   const profilesPerPage = 3;
 
-  // Calculer les profils à afficher en fonction du tab actif
-  const profiles = useMemo(() => {
-    const startIndex = activeTab * profilesPerPage;
-    return allProfiles.slice(startIndex, startIndex + profilesPerPage);
-  }, [activeTab]);
+  // Charger les profils aléatoires depuis l'API
+  useEffect(() => {
+    const loadRandomUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const randomUsers = await userService.getRandomUsers(9); // On charge 9 profils pour avoir 3 pages
+        setProfiles(randomUsers);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Une erreur est survenue");
+        console.error("Erreur lors du chargement des profils aléatoires:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRandomUsers();
+  }, []);
+
+  // Log pour le débogage
+  console.log('Profiles received:', profiles);
+
+  // S'assurer que profiles est un tableau
+  const profilesArray = Array.isArray(profiles) ? profiles : [];
+
+  // Calculer les profils à afficher pour la page actuelle
+  const displayedProfiles = profilesArray.slice(
+    activeTab * profilesPerPage,
+    (activeTab + 1) * profilesPerPage
+  );
 
   // Calculer le nombre total de pages
-  const totalPages = Math.ceil(allProfiles.length / profilesPerPage);
+  const totalPages = Math.ceil(profilesArray.length / profilesPerPage);
 
   // Vérifier si l'écran est inférieur à 1000px
   const isBelowBreakpoint = useQuickAddBreakpoint();
@@ -92,37 +85,52 @@ const QuickAdd = () => {
       </div>
 
       <div className="space-y-4">
-        {profiles.map((profile) => (
-          <Link key={profile.id} to={`/u/${profile.username}`} className="block">
-            <div className="relative hover:-translate-y-0.5 transition-transform duration-200 cursor-pointer">
-              {/* Cover Image */}
-              <div className="h-32 rounded-xl overflow-hidden relative">
-                <img
-                  src={profile.coverImage}
-                  alt={`${profile.name} cover`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader2 className="w-8 h-8 animate-spin text-stragram-primary" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 p-4">{error}</div>
+        ) : displayedProfiles.length === 0 ? (
+          <div className="text-center text-gray-500 p-4">Aucun profil à suggérer</div>
+        ) : (
+          displayedProfiles.map((profile) => (
+            <Link key={profile.id} to={`/u/${profile.username}`} className="block">
+              <div className="relative hover:-translate-y-0.5 transition-transform duration-200 cursor-pointer">
+                {/* Cover Image */}
+                <div className="h-32 rounded-xl overflow-hidden relative">
+                  <img
+                    src={profile.bannerUrl || DEFAULT_COVER}
+                    alt={`${profile.name || profile.username} cover`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-                {/* Profile Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12 border-2 border-white">
-                      <AvatarImage src={profile.avatar} alt={profile.name} />
-                      <AvatarFallback className="bg-stragram-primary text-white text-sm">
-                        {profile.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-white">
-                      <h3 className="font-semibold text-base">{profile.name}</h3>
-                      <p className="text-sm text-white/90">@{profile.username}</p>
+                  {/* Profile Info */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12 border-2 border-white">
+                        <AvatarImage
+                          src={profile.avatarUrl || undefined}
+                          alt={profile.name || profile.username}
+                        />
+                        <AvatarFallback className="bg-stragram-primary text-white text-sm">
+                          {(profile.name || profile.username).charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-white">
+                        <h3 className="font-semibold text-base">
+                          {profile.name || profile.username}
+                        </h3>
+                        <p className="text-sm text-white/90">@{profile.username}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

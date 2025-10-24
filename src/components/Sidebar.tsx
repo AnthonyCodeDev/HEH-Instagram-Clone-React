@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { HomeIcon, NotificationIcon, MessageIcon, ProfileIcon, SettingsIcon, LogoutIcon } from "./SidebarIcons";
 
 
-const menuItems = [
-  { icon: HomeIcon, label: "Accueil", path: "/" },
-  { icon: NotificationIcon, label: "Notifications", path: "/notifications" },
-  { icon: MessageIcon, label: "Messages", path: "/messages" },
-  { icon: ProfileIcon, label: "Profil", path: "/u/bahsonnom" },
-  { icon: SettingsIcon, label: "Paramètres", path: "/settings" },
-];
+const getMenuItems = () => {
+  const username = localStorage.getItem('username') || '';
+  return [
+    { icon: HomeIcon, label: "Accueil", path: "/" },
+    { icon: NotificationIcon, label: "Notifications", path: "/notifications" },
+    { icon: MessageIcon, label: "Messages", path: "/messages" },
+    { icon: ProfileIcon, label: "Profil", path: `/u/${username}` },
+    { icon: SettingsIcon, label: "Paramètres", path: "/settings" },
+  ];
+};
 
 const Sidebar = () => {
   const location = useLocation();
@@ -73,7 +76,7 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {menuItems.map((item) => {
+          {getMenuItems().map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
 

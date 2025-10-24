@@ -318,7 +318,6 @@ const UserProfile = () => {
                 </div>
               </div>
 
-              {/* Follow Section - uniquement pour les autres utilisateurs, pas pour bahsonnom */}
               {username !== state.user.username && (
                 <div className="border-t pt-4">
                   <button

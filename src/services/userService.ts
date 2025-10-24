@@ -96,5 +96,25 @@ export const userService = {
             console.error('Error unfollowing user:', error);
             throw error;
         }
+    },
+
+    async getRandomUsers(size: number = 6): Promise<UserResponse[]> {
+        try {
+            const response = await fetch(`${API_URL}/users/random?size=${size}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch random users: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.users; // Retourne le tableau users de la réponse
+        } catch (error) {
+            console.error('Error fetching random users:', error);
+            throw error;
+        }
     }
 };

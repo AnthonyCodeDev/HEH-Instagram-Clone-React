@@ -1,96 +1,244 @@
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useState } from "react";
-import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
-
-type LocationState = {
-    image?: string;
-    content?: string;
-    user?: { name: string; username: string; avatar: string; };
-};
+import { useState, useEffect } from "react";
+import PostWithComments from "@/components/PostWithComments";
+import { postService } from "@/services/postService";
+import type { PostResponse, Comment } from "@/types/post";
 
 const ProfilePost = () => {
-    const { postId, username } = useParams();
-    const location = useLocation();
-    const state = (location.state || {}) as LocationState;
-    const [isLiked, setIsLiked] = useState(false);
-    const [isBookmarked, setIsBookmarked] = useState(false);
-    const [likes, setLikes] = useState(256);
+    const { postId } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [post, setPost] = useState<PostResponse | null>(null);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [hasMoreComments, setHasMoreComments] = useState(false);
+    const [page, setPage] = useState(0);
 
-    const user = {
-        name: "Lucas Hergz",
-        username: "lucashergz20",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+    useEffect(() => {
+        const loadPost = async () => {
+            if (!postId) return;
+
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Charger le post
+                const postData = await postService.getPostById(postId);
+                setPost(postData);
+
+                // Charger les commentaires
+                const commentsData = await postService.getPostComments(postId);
+                setComments(commentsData.comments);
+                setHasMoreComments(commentsData.hasMore);
+                setPage(commentsData.page);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Une erreur est survenue");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadPost();
+    }, [postId]);
+
+
+    const [isLiking, setIsLiking] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleLike = async () => {
+        if (!post || !postId || isLiking) return;
+
+        try {
+            setIsLiking(true);
+
+            if (post.likedByCurrentUser) {
+                await postService.unlikePost(postId);
+            } else {
+                await postService.likePost(postId);
+            }
+
+            setPost(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    likedByCurrentUser: !prev.likedByCurrentUser,
+                    likeCount: prev.likedByCurrentUser ? prev.likeCount - 1 : prev.likeCount + 1
+                };
+            });
+        } catch (error) {
+            console.error('Error toggling like:', error);
+        } finally {
+            setIsLiking(false);
+        }
     };
 
-    const content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi laoreet libero eget lacus mattis, ut luctus augue pulvinar.";
-    const image = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200";
+    const handleSave = async () => {
+        if (!post || !postId || isSaving) return;
 
-    const [comments, setComments] = useState([
-        { user: { name: "Tom", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200" }, text: "Magnifique coucher de soleil !" },
-        { user: { name: "Lucie", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200" }, text: "Ohh superbe ! tu vois" },
-        { user: { name: "Marie", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200" }, text: "Ça donne envie de voyager." },
-        { user: { name: "John", avatar: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200" }, text: "Incroyable photo, comme d'habitude !" },
-        { user: { name: "Anna", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" }, text: "J'adore les couleurs !" }
-    ]);
+        try {
+            setIsSaving(true);
 
+            if (post.favoritedByCurrentUser) {
+                await postService.unfavoritePost(postId);
+            } else {
+                await postService.favoritePost(postId);
+            }
 
-    const handleLike = () => {
-        setIsLiked(!isLiked);
-        setLikes(isLiked ? likes - 1 : likes + 1);
+            setPost(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    favoritedByCurrentUser: !prev.favoritedByCurrentUser
+                };
+            });
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleBookmark = () => {
-        setIsBookmarked(!isBookmarked);
+    const handleAddComment = (_postIndex: number, comment: Comment) => {
+        if (!postId) return;
+
+        // Convertir le commentaire au format attendu par l'état
+        const newComment = {
+            id: comment.id,
+            authorId: comment.authorId,
+            authorUsername: comment.authorUsername,
+            authorAvatarUrl: comment.authorAvatarUrl,
+            content: comment.content,
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt
+        };
+
+        // Mettre à jour la liste des commentaires
+        setComments(prev => [newComment, ...prev]);
+
+        // Mettre à jour le compteur de commentaires
+        setPost(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                commentCount: prev.commentCount + 1
+            };
+        });
     };
+
+    const handleDeletePost = async (id: string) => {
+        try {
+            await postService.deletePost(id);
+            // Rediriger vers le profil de l'utilisateur après la suppression
+            const username = localStorage.getItem('username');
+            window.location.href = `/u/${username}`;
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            throw error;
+        }
+    };
+
+    const loadMoreComments = async () => {
+        if (!postId || !hasMoreComments || loading) return;
+
+        try {
+            setLoading(true);
+            const nextPage = page + 1;
+            const moreComments = await postService.getPostComments(postId, nextPage);
+            setComments(prev => [...prev, ...moreComments.comments]);
+            setHasMoreComments(moreComments.hasMore);
+            setPage(moreComments.page);
+        } catch (error) {
+            console.error('Error loading more comments:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                <Sidebar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <p>Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !post) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                <Sidebar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <h1 className="text-xl font-semibold mb-2">
+                            {error || "Publication introuvable"}
+                        </h1>
+                        <p className="text-gray-600">Cette publication n'existe pas ou a été supprimée.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <Sidebar />
 
             <div className="flex-1 flex max-w-none h-full overflow-x-hidden">
-                {/* Main Content */}
                 <div className="flex-1 p-6 pb-24 sm:pb-6 overflow-y-auto w-full">
                     <div className="max-w-3xl mx-auto">
                         <PostWithComments
                             post={{
-                                id: postId || "default-post-id",
-                                user,
-                                content,
-                                image,
+                                id: post.id,
+                                user: {
+                                    id: post.authorId,  // Ajout de l'ID de l'auteur
+                                    name: post.authorUsername,
+                                    username: post.authorUsername,
+                                    avatar: post.authorAvatarUrl
+                                },
+                                authorId: post.authorId,  // Ajout de l'ID de l'auteur au niveau du post
+                                content: post.description,
+                                image: post.imageUrl,
                                 comments: comments.map(comment => ({
-                                    author: comment.user.name,
-                                    avatar: comment.user.avatar,
-                                    text: comment.text
+                                    id: comment.id,
+                                    author: comment.authorUsername,
+                                    avatar: comment.authorAvatarUrl,
+                                    text: comment.content,
+                                    createdAt: comment.createdAt
                                 }))
                             }}
                             postState={{
-                                liked: isLiked,
-                                saved: isBookmarked,
-                                likes
+                                liked: post.likedByCurrentUser,
+                                saved: post.favoritedByCurrentUser,
+                                likes: post.likeCount
                             }}
                             postIndex={0}
                             onLike={() => handleLike()}
-                            onSave={() => handleBookmark()}
+                            onSave={() => handleSave()}
                             onAddComment={(_, comment) => {
-                                setComments(prevComments => [
-                                    {
-                                        user: {
-                                            name: comment.author,
-                                            avatar: comment.avatar
-                                        },
-                                        text: comment.text
-                                    },
-                                    ...prevComments
-                                ]);
+                                if (!comment.text) return;
+                                handleAddComment(_, {
+                                    id: comment.id || "",
+                                    authorId: comment.authorId || "",
+                                    authorUsername: comment.author,
+                                    authorAvatarUrl: comment.avatar,
+                                    content: comment.text,
+                                    createdAt: comment.createdAt || new Date().toISOString(),
+                                    updatedAt: null
+                                });
                             }}
+                            isLiking={{ [post.id]: isLiking }}
+                            isSaving={{ [post.id]: isSaving }}
+                            currentUserId={localStorage.getItem("userId")}
+                            onDeletePost={handleDeletePost}
                         />
                     </div>
                 </div>
 
-                {/* Right Sidebar */}
                 <RightBar />
             </div>
         </div>

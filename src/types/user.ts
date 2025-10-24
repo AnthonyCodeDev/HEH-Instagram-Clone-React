@@ -8,13 +8,15 @@ export interface SocialLinks {
 export interface UserResponse {
     id: string;
     username: string;
-    email: string;
-    bio: string;
-    avatarUrl: string;
-    followersCount: number;
-    followingCount: number;
-    createdAt: string;
-    isCurrentUserFollowing: boolean;
+    name: string;
+    email?: string;
+    bio?: string;
+    avatarUrl: string | null;
+    bannerUrl?: string | null;
+    followersCount?: number;
+    followingCount?: number;
+    createdAt?: string;
+    isCurrentUserFollowing?: boolean;
     socialLinks?: SocialLinks;
 }
 
