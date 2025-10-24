@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
-import sunsetBeach from "@/assets/sunset-beach.jpg";
 
 
 // Type pour la réponse de l'API des posts récents
@@ -362,7 +361,7 @@ const Home = () => {
             id: post.authorId, // Ajouter l'ID de l'auteur dans l'objet user
             name: post.authorUsername, // Utiliser le nom d'utilisateur comme nom complet
             username: post.authorUsername,
-            avatar: post.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+            avatar: post.authorAvatarUrl || null
           },
           content: post.description,
           image: post.imageUrl,
@@ -775,7 +774,7 @@ const Home = () => {
                           id: postData.authorId || currentUserId, // Ajouter l'ID de l'auteur dans l'objet user
                           name: postData.authorUsername, // Utiliser les données de l'API
                           username: postData.authorUsername,
-                          avatar: postData.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+                          avatar: postData.authorAvatarUrl || null
                         },
                         content: postData.description,
                         image: postData.imageUrl, // Peut être undefined si pas d'image
@@ -890,7 +889,7 @@ const Home = () => {
                       user: {
                         name: post.authorUsername,
                         username: post.authorUsername,
-                        avatar: post.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"
+                        avatar: post.authorAvatarUrl || undefined
                       },
                       content: post.description,
                       image: post.imageUrl,

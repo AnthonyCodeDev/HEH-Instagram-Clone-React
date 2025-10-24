@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Heart, Bookmark, X, Loader2, Send, MoreVertical, Trash2, Link2, Copy, Check } from "lucide-react";
+import { CommentInput } from "@/components/CommentInput";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -13,12 +14,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export type Comment = {
     id?: string;
     author: string;
-    avatar: string;
+    avatar: string | null;  // Changé pour correspondre à l'API
     text: string;
     createdAt?: string;
     authorId?: string;
     authorUsername?: string;
-    authorAvatarUrl?: string;
+    authorAvatarUrl?: string | null;  // Changé pour correspondre à l'API
     postId?: string;
 };
 
@@ -38,7 +39,7 @@ export type PostUser = {
     id?: string;
     name: string;
     username: string;
-    avatar: string;
+    avatar: string | null;  // Changé pour correspondre à l'API
 };
 
 export type PostData = {
@@ -165,10 +166,10 @@ const PostWithComments = ({
             const formattedComments = data.comments.map((comment: ApiCommentResponse) => ({
                 id: comment.id,
                 author: comment.authorUsername,
-                avatar: comment.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
+                avatar: comment.authorAvatarUrl || undefined,
                 text: comment.text,
                 createdAt: comment.createdAt,
-                updatedAt: comment.updatedAt, // Ajouter updatedAt pour le tri
+                updatedAt: comment.updatedAt,
                 authorId: comment.authorId,
                 authorUsername: comment.authorUsername,
                 authorAvatarUrl: comment.authorAvatarUrl,
@@ -268,7 +269,7 @@ const PostWithComments = ({
             const commentToAdd = {
                 id: commentData.id,
                 author: commentData.authorUsername,
-                avatar: commentData.authorAvatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200",
+                avatar: commentData.authorAvatarUrl || null,
                 text: commentData.text,
                 createdAt: commentData.createdAt,
                 authorId: commentData.authorId,
@@ -370,10 +371,10 @@ const PostWithComments = ({
                         <div className="shrink-0">
                             <Avatar className="w-12 h-12">
                                 <AvatarImage
-                                    src={post.user.avatar}
+                                    src={post.user.avatar || undefined}
                                     alt={post.user.name}
                                 />
-                                <AvatarFallback>{post.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                <AvatarFallback>{post.user.name.split(' ').map(n => n[0]).join('').toLowerCase()}</AvatarFallback>
                             </Avatar>
                         </div>
                         <div className="flex-1">
@@ -494,42 +495,14 @@ const PostWithComments = ({
                 {/* Comments */}
                 <div className="px-6 pb-6 pt-2">
                     {/* Nouveau champ de commentaire */}
-                    <div className="flex items-start gap-3 mb-4">
-                        <div className="shrink-0">
-                            <Avatar className="w-8 h-8">
-                                <AvatarImage
-                                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200"
-                                    alt="Vous"
-                                />
-                                <AvatarFallback>BN</AvatarFallback>
-                            </Avatar>
-                        </div>
-                        <div className="flex-1 flex">
-                            <input
-                                type="text"
-                                placeholder="Ajouter un commentaire..."
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                className="flex-1 bg-gray-100 rounded-l-xl px-3 py-2 text-sm text-gray-800 focus:outline-none"
-                                disabled={isSubmittingComment}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter' && !isSubmittingComment) {
-                                        handleAddComment();
-                                    }
-                                }}
-                            />
-                            <button
-                                onClick={handleAddComment}
-                                className="bg-stragram-primary text-white rounded-r-xl px-3 py-2 text-sm hover:bg-stragram-primary/90 flex items-center justify-center"
-                                disabled={isSubmittingComment || !newComment.trim()}
-                            >
-                                {isSubmittingComment ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Send className="w-4 h-4" />
-                                )}
-                            </button>
-                        </div>
+                    <div className="mb-4">
+                        <CommentInput
+                            onSubmit={async (text) => {
+                                setNewComment(text);
+                                await handleAddComment();
+                            }}
+                            isSubmitting={isSubmittingComment}
+                        />
                     </div>
 
                     {/* Liste des commentaires existants */}
@@ -555,8 +528,8 @@ const PostWithComments = ({
                             <div key={c.id || idx} className="flex items-start gap-3">
                                 <div className="shrink-0">
                                     <Avatar className="w-8 h-8">
-                                        <AvatarImage src={c.avatar} alt={c.author} />
-                                        <AvatarFallback>{c.author[0]}</AvatarFallback>
+                                        <AvatarImage src={c.avatar || undefined} alt={c.author} />
+                                        <AvatarFallback>{c.author[0].toLowerCase()}</AvatarFallback>
                                     </Avatar>
                                 </div>
                                 <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-800">

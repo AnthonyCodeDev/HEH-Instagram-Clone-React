@@ -69,7 +69,7 @@ const Profile = () => {
               <div className="absolute bottom-6 left-6">
                 <Avatar className="w-32 h-32 border-4 border-white">
                   <AvatarImage
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
+                    src={undefined}
                     alt="Lucas Hergz"
                   />
                   <AvatarFallback className="bg-stragram-primary text-white text-2xl">
@@ -83,7 +83,7 @@ const Profile = () => {
               <div className="absolute bottom-6 right-6">
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30">
+                    <Button variant="outline" className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
                       <Settings className="w-4 h-4 mr-2" />
                       Éditer le profil
                     </Button>
@@ -107,7 +107,7 @@ const Profile = () => {
                       {/* Profile Picture */}
                       <div className="flex items-center gap-4">
                         <Avatar className="w-16 h-16">
-                          <AvatarImage src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" alt={profileData.name} />
+                          <AvatarImage src={profileData.avatarUrl || undefined} alt={profileData.name} />
                           <AvatarFallback className="bg-stragram-primary text-white text-lg">
                             {profileData.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>

@@ -96,7 +96,7 @@ const QuickAdd = () => {
         ) : (
           displayedProfiles.map((profile) => (
             <Link key={profile.id} to={`/u/${profile.username}`} className="block">
-              <div className="relative hover:-translate-y-0.5 transition-transform duration-200 cursor-pointer">
+              <div className="relative cursor-pointer">
                 {/* Cover Image */}
                 <div className="h-32 rounded-xl overflow-hidden relative">
                   <img
@@ -109,13 +109,15 @@ const QuickAdd = () => {
                   {/* Profile Info */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12 border-2 border-white">
+                      <Avatar className="w-12 h-12">
                         <AvatarImage
                           src={profile.avatarUrl || undefined}
                           alt={profile.name || profile.username}
                         />
-                        <AvatarFallback className="bg-stragram-primary text-white text-sm">
-                          {(profile.name || profile.username).charAt(0).toUpperCase()}
+                        <AvatarFallback>
+                          <span className="flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground">
+                            {(profile.name || profile.username).charAt(0).toLowerCase()}
+                          </span>
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-white">

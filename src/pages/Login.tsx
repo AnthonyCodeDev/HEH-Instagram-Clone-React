@@ -52,10 +52,11 @@ const Login = () => {
       });
 
       // Stocker le token JWT et les informations utilisateur
-      const { token, userId, username } = response.data;
+      const { token, userId, username, avatar } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('userId', userId);
       localStorage.setItem('username', username);
+      localStorage.setItem('userAvatar', avatar || '');
 
       // Définir un cookie pour la compatibilité avec le code existant
       const maxAgeSeconds = 60 * 60 * 24 * 7; // 7 jours

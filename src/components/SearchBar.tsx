@@ -152,7 +152,7 @@ const SearchBar = () => {
                             >
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-8 h-8">
-                                        <AvatarImage src={user.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"} alt={user.username} />
+                                        <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
                                         <AvatarFallback className="bg-stragram-primary text-white text-xs">
                                             {user.username.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
