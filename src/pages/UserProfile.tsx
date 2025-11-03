@@ -198,25 +198,35 @@ const UserProfile = () => {
               <div className="absolute bottom-4 right-6">
                 {currentUser && currentUser.username === username ? (
                   <Button
-                    variant="outline"
-                    className="bg-white text-stragram-primary border-stragram-primary hover:bg-stragram-primary hover:text-white rounded-full h-8 px-4"
-                    asChild
-                  >
-                    <Link to="/settings">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Éditer le profil
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
                     variant="default"
                     className="bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 rounded-lg h-9 px-4 font-medium text-sm shadow-sm transition-all duration-200 flex items-center gap-2 hover:border-gray-300"
                     asChild
                   >
-                    <Link to={`/messages?u=${username}`} className="flex items-center gap-2">
-                      <span className="font-medium">Envoyer un message</span>
+                    <Link to="/settings" className="flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      <span className="font-medium">Éditer le profil</span>
                     </Link>
                   </Button>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="default"
+                      onClick={handleFollowToggle}
+                      className={`h-9 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${state.user?.isCurrentUserFollowing ? 'bg-white text-[#EC3558] border border-[#EC3558] hover:bg-[#EC3558] hover:text-white' : 'bg-[#EC3558] text-white hover:bg-[#d43a53]'}`}
+                    >
+                      {state.user?.isCurrentUserFollowing ? 'Abonné' : "S'abonner"}
+                    </Button>
+
+                    <Button
+                      variant="default"
+                      className="bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 rounded-lg h-9 px-4 font-medium text-sm shadow-sm transition-all duration-200 flex items-center gap-2 hover:border-gray-300"
+                      asChild
+                    >
+                      <Link to={`/messages?u=${username}`} className="flex items-center gap-2">
+                        <span className="font-medium">Envoyer un message</span>
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -360,61 +370,69 @@ const UserProfile = () => {
                 </TabsList>
 
                 <TabsContent value="posts" className="p-0 mt-0">
-                  <div className="grid grid-cols-3 gap-1">
-                    {state.posts.map((post) => (
-                      <Link
-                        key={post.id}
-                        to={`/p/${post.id}`}
-                        className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
-                      >
-                        {post.imageUrl ? (
-                          <img
-                            src={post.imageUrl}
-                            alt={post.description}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
-                            <p className="text-sm text-gray-600 line-clamp-4 text-center">
-                              {post.description || "Aucune description"}
-                            </p>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                          <div className="flex items-center gap-2 text-white">
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-5 h-5"
-                            >
-                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                            </svg>
-                            <span>{post.likeCount}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-white">
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-5 h-5"
-                            >
-                              <path d="M21 15a2 2 0 0 1-2 2h-2v3.17c0 .53-.61.83-1.03.5L11.83 17H8c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h11c1.1 0 2 .9 2 2v8zM3 6v8c0 1.1.9 2 2 2h2v-9c0-.55.45-1 1-1h9V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z" />
-                            </svg>
-                            <span>{post.commentCount}</span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                  {state.hasMore && (
-                    <div className="text-center py-4">
-                      <Button variant="outline" onClick={loadMorePosts} disabled={state.loading}>
-                        {state.loading ? "Chargement..." : "Charger plus"}
-                      </Button>
+                  {state.posts.length === 0 ? (
+                    <div className="flex items-center justify-center h-64 text-gray-500">
+                      Aucune publication
                     </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-1">
+                        {state.posts.map((post) => (
+                          <Link
+                            key={post.id}
+                            to={`/p/${post.id}`}
+                            className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
+                          >
+                            {post.imageUrl ? (
+                              <img
+                                src={post.imageUrl}
+                                alt={post.description}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                <p className="text-sm text-gray-600 line-clamp-4 text-center">
+                                  {post.description || "Aucune description"}
+                                </p>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                              <div className="flex items-center gap-2 text-white">
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="w-5 h-5"
+                                >
+                                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                </svg>
+                                <span>{post.likeCount}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-white">
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="w-5 h-5"
+                                >
+                                  <path d="M21 15a2 2 0 0 1-2 2h-2v3.17c0 .53-.61.83-1.03.5L11.83 17H8c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h11c1.1 0 2 .9 2 2v8zM3 6v8c0 1.1.9 2 2 2h2v-9c0-.55.45-1 1-1h9V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z" />
+                                </svg>
+                                <span>{post.commentCount}</span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                      {state.hasMore && (
+                        <div className="text-center py-4">
+                          <Button variant="outline" onClick={loadMorePosts} disabled={state.loading}>
+                            {state.loading ? "Chargement..." : "Charger plus"}
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </TabsContent>
                 <TabsContent value="videos" className="p-0 mt-0">

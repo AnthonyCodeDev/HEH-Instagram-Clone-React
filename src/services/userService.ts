@@ -29,7 +29,13 @@ export const userService = {
         try {
             // D'abord, cherchons avec l'endpoint de recherche public garanti
             console.log(`[userService] Searching for user "${username}" via search endpoint`);
-            const searchResponse = await fetch(`${API_URL}/users/search?query=${username}`);
+            const token = localStorage.getItem('token');
+            const headers: Record<string, string> = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const searchResponse = await fetch(`${API_URL}/users/search?query=${username}`, { headers });
 
             if (!searchResponse.ok) {
                 throw new Error(`Search failed: ${searchResponse.status}`);
@@ -38,14 +44,21 @@ export const userService = {
             const searchData = await searchResponse.json() as SearchUserResponse;
             console.log(`[userService] Search results:`, searchData);
 
-            const matchedUser = searchData.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+            // Some backends return `currentUserFollowing` instead of `isCurrentUserFollowing`.
+            // Normalize the search items to always expose `isCurrentUserFollowing`.
+            const normalizedUsers = searchData.users.map(u => ({
+                ...u,
+                isCurrentUserFollowing: (u as any).isCurrentUserFollowing ?? (u as any).currentUserFollowing ?? false
+            }));
+
+            const matchedUser = normalizedUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
             if (!matchedUser) {
                 throw new Error('User not found');
             }
 
             // Une fois qu'on a l'ID, utilisons l'endpoint /users/{id} qui est garanti public
             console.log(`[userService] Fetching full profile for user ID: ${matchedUser.id}`);
-            const profileResponse = await fetch(`${API_URL}/users/${matchedUser.id}`);
+            const profileResponse = await fetch(`${API_URL}/users/${matchedUser.id}`, { headers });
 
             if (!profileResponse.ok) {
                 throw new Error(`Failed to fetch profile: ${profileResponse.status}`);
@@ -53,7 +66,14 @@ export const userService = {
 
             const profileData = await profileResponse.json();
             console.log(`[userService] Full profile data:`, profileData);
-            return profileData;
+
+            // Normalize profile fields: backend may return `currentUserFollowing`.
+            const normalizedProfile = {
+                ...profileData,
+                isCurrentUserFollowing: (profileData as any).isCurrentUserFollowing ?? (profileData as any).currentUserFollowing ?? false
+            };
+
+            return normalizedProfile;
         } catch (error) {
             console.error('Error fetching user:', error);
             throw error;
@@ -111,7 +131,11 @@ export const userService = {
             }
 
             const data = await response.json();
-            return data.users; // Retourne le tableau users de la réponse
+            // Normaliser le champ de follow pour les consumers frontend
+            return (data.users || []).map((u: any) => ({
+                ...u,
+                isCurrentUserFollowing: u.isCurrentUserFollowing ?? u.currentUserFollowing ?? false
+            })); // Retourne le tableau users de la réponse
         } catch (error) {
             console.error('Error fetching random users:', error);
             throw error;
