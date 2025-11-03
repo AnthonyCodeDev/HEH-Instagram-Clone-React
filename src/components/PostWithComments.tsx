@@ -93,6 +93,7 @@ const PostWithComments = ({
     const [comments, setComments] = useState<Comment[]>([]);
     const [hasMoreComments, setHasMoreComments] = useState(false);
     const [commentsPage, setCommentsPage] = useState(0);
+    const [deletingComments, setDeletingComments] = useState<Record<string, boolean>>({});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isDeletingPost, setIsDeletingPost] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
@@ -253,6 +254,57 @@ const PostWithComments = ({
     // Afficher les commentaires (les plus récents en premier)
     const shown = comments.slice(0, visible);
     const hasMore = comments.length > visible || hasMoreComments;
+
+    // Supprimer un commentaire via l'API
+    const deleteComment = async (commentId?: string) => {
+        if (!commentId) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Non authentifié');
+
+            // Marquer en cours
+            setDeletingComments(prev => ({ ...prev, [commentId]: true }));
+
+            const response = await fetch(`http://localhost:8081/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || `Erreur ${response.status}`);
+            }
+
+            // Retirer localement le commentaire
+            setComments(prev => prev.filter(c => c.id !== commentId));
+
+            // Mettre à jour le compteur de commentaires du post si présent
+            if (post.commentCount !== undefined && post.commentCount > 0) {
+                post.commentCount -= 1;
+            }
+
+            toast({
+                title: 'Commentaire supprimé',
+                description: 'Le commentaire a bien été supprimé.'
+            });
+        } catch (error) {
+            toast({
+                title: 'Erreur',
+                description: error instanceof Error ? error.message : 'Impossible de supprimer le commentaire',
+                variant: 'destructive'
+            });
+        } finally {
+            setDeletingComments(prev => {
+                const next = { ...prev };
+                delete next[commentId];
+                return next;
+            });
+        }
+    };
 
     // Accept a text parameter to avoid relying on a possibly stale parent state
     const handleAddComment = async (text?: string) => {
@@ -518,20 +570,44 @@ const PostWithComments = ({
                         )}
 
                         {/* Liste des commentaires */}
-                        {shown.map((c, idx) => (
-                            <div key={c.id || idx} className="flex items-start gap-3">
-                                <div className="shrink-0">
-                                    <Avatar className="w-8 h-8">
-                                        <AvatarImage src={c.avatar || undefined} alt={c.author} />
-                                        <AvatarFallback>{c.author[0].toLowerCase()}</AvatarFallback>
-                                    </Avatar>
+                        {shown.map((c, idx) => {
+                            const canDelete = !!(c.authorId && userIdToCheck && c.authorId === userIdToCheck);
+                            return (
+                                <div key={c.id || idx} className="flex items-start gap-3">
+                                    <div className="shrink-0">
+                                        <Avatar className="w-8 h-8">
+                                            <AvatarImage src={c.avatar || undefined} alt={c.author} />
+                                            <AvatarFallback>{c.author[0].toLowerCase()}</AvatarFallback>
+                                        </Avatar>
+                                    </div>
+
+                                    <div className="flex-1 flex items-center justify-between">
+                                        <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-800 max-w-full">
+                                            <span className="font-semibold mr-1">{c.author}</span>
+                                            {c.text}
+                                        </div>
+
+                                        {canDelete && (
+                                            <button
+                                                className="ml-2 text-red-500 hover:text-red-700 p-1 rounded-md"
+                                                onClick={async (e) => {
+                                                    e.preventDefault();
+                                                    if (!c.id) return;
+                                                    await deleteComment(c.id);
+                                                }}
+                                                aria-label="Supprimer le commentaire"
+                                            >
+                                                {deletingComments[c.id || ''] ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-800">
-                                    <span className="font-semibold mr-1">{c.author}</span>
-                                    {c.text}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
 
                         {/* Bouton "Voir plus" */}
                         {hasMore && (
