@@ -4,11 +4,13 @@ import { HomeIcon, NotificationIcon, MessageIcon, ProfileIcon, SettingsIcon } fr
 const MobileNavbar = () => {
     const location = useLocation();
 
+    const username = localStorage.getItem('username') || '';
+
     const menuItems = [
         { icon: HomeIcon, path: "/", label: "Accueil" },
         { icon: NotificationIcon, path: "/notifications", label: "Notifications" },
         { icon: MessageIcon, path: "/messages", label: "Messages" },
-        { icon: ProfileIcon, path: "/u/bahsonnom", label: "Profil" },
+        { icon: ProfileIcon, path: `/u/${username}`, label: "Profil" },
         { icon: SettingsIcon, path: "/settings", label: "Paramètres" }
     ];
 

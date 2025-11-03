@@ -655,10 +655,28 @@ const PostWithComments = ({
                 </div>
 
                 {/* Image Preview Dialog */}
-                <Dialog open={!!previewImage} onOpenChange={(o) => !o && setPreviewImage(null)}>
-                    <DialogContent variant="bare">
+                <Dialog open={!!previewImage} onOpenChange={(open) => { if (!open) setPreviewImage(null); }}>
+                    <DialogContent className="p-0 bg-transparent flex items-center justify-center" variant="bare">
                         {previewImage && (
-                            <img src={previewImage} alt="Post content large" className="max-h-[85vh] w-auto object-contain" />
+                            <div className="relative w-full max-w-[90vw] max-h-[90vh]">
+                                {/* Bouton de fermeture stylé en haut à droite */}
+                                <button
+                                    onClick={() => setPreviewImage(null)}
+                                    aria-label="Fermer"
+                                    className="absolute top-3 right-3 z-20 bg-black/50 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm shadow-md"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+
+                                {/* Conteneur image centré avec ombre et bords arrondis */}
+                                <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg shadow-2xl bg-black">
+                                    <img
+                                        src={previewImage}
+                                        alt="Aperçu du post"
+                                        className="max-w-full max-h-[90vh] object-contain"
+                                    />
+                                </div>
+                            </div>
                         )}
                     </DialogContent>
                 </Dialog>
