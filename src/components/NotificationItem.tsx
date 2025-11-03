@@ -103,31 +103,35 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
         }
     };
 
-    // Déterminer le texte de la notification
+    // Déterminer le texte de la notification en utilisant les clés présentes dans le payload
     const getNotificationText = () => {
+        const payload: any = notification.payload || {};
+        const actor = payload.likerUsername || payload.commenterUsername || payload.followerUsername || payload.authorUsername || payload.username || '';
+        const actorDisplay = actor ? `@${actor}` : 'Quelqu\'un';
+
         switch (notification.type) {
             case 'LIKE':
                 return (
                     <span>
-                        <span className="font-medium">@{(notification.payload as any).likerUsername}</span> a aimé votre publication
+                        <span className="font-medium">{actorDisplay}</span> a aimé votre publication
                     </span>
                 );
             case 'COMMENT':
                 return (
                     <span>
-                        <span className="font-medium">@{(notification.payload as any).commenterUsername}</span> a commenté : "{(notification.payload as any).commentText}"
+                        <span className="font-medium">{actorDisplay}</span> a commenté : "{payload.commentText || ''}"
                     </span>
                 );
             case 'FOLLOW':
                 return (
                     <span>
-                        <span className="font-medium">@{(notification.payload as any).followerUsername}</span> a commencé à vous suivre
+                        <span className="font-medium">{actorDisplay}</span> a commencé à vous suivre
                     </span>
                 );
             case 'SYSTEM':
                 return (
                     <span>
-                        {(notification.payload as any).message}
+                        {payload.message}
                     </span>
                 );
             default:
@@ -135,30 +139,23 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
         }
     };
 
-    // Déterminer l'avatar en fonction du type de notification
+    // Déterminer l'avatar en utilisant les champs disponibles dans le payload
     const getAvatarInfo = () => {
         const payload: any = notification.payload || {};
-        const takeFallback = (s: unknown) => {
-            if (typeof s === 'string' && s.length > 0) return s.substring(0, 2).toUpperCase();
-            return 'ST';
-        };
 
-        switch (notification.type) {
-            case 'LIKE': {
-                const username = payload.likerUsername || 'Stragram';
-                return { username, fallback: takeFallback(payload.likerUsername) };
-            }
-            case 'COMMENT': {
-                const username = payload.commenterUsername || 'Stragram';
-                return { username, fallback: takeFallback(payload.commenterUsername) };
-            }
-            case 'FOLLOW': {
-                const username = payload.followerUsername || 'Stragram';
-                return { username, fallback: takeFallback(payload.followerUsername) };
-            }
-            default:
-                return { username: 'Stragram', fallback: 'ST' };
-        }
+        // Rassembler toutes les variantes possibles de username
+        const username = payload.likerUsername || payload.commenterUsername || payload.followerUsername || payload.authorUsername || payload.username || '';
+
+        // Rassembler toutes les variantes possibles d'URL d'avatar
+        const avatarUrl = payload.likerAvatarUrl || payload.commenterAvatarUrl || payload.followerAvatarUrl || payload.authorAvatarUrl || payload.avatarUrl || payload.likerAvatar || payload.commenterAvatar || payload.followerAvatar || payload.authorAvatar || undefined;
+
+        // fallback : première lettre en minuscule (ex: 'a' pour 'anthony')
+        const fallback = username && typeof username === 'string' && username.length > 0 ? username[0].toLowerCase() : 'a';
+
+        // Username affichable (fallback à 'Stragram' si absent)
+        const displayName = username || 'Stragram';
+
+        return { username: displayName, fallback, avatarUrl };
     };
 
     const avatarInfo = getAvatarInfo();
@@ -175,8 +172,10 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
         >
             <Link to={getDestinationUrl()} onClick={handleClick} className="shrink-0 relative">
                 <Avatar className="w-10 h-10">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/micah/svg?seed=${avatarInfo.username}`} alt={avatarInfo.username} />
-                    <AvatarFallback>{avatarInfo.fallback}</AvatarFallback>
+                    {avatarInfo.avatarUrl ? (
+                        <AvatarImage src={avatarInfo.avatarUrl} alt={avatarInfo.username} />
+                    ) : null}
+                    <AvatarFallback className={avatarInfo.avatarUrl ? '' : 'bg-gray-100 text-gray-700'}>{avatarInfo.fallback}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full">
                     {getIcon()}
