@@ -32,11 +32,13 @@ const NotificationsList = ({ onClose }: NotificationsListProps) => {
 
             const response = await fetchNotifications(pageNum);
 
-            if (pageNum === 0) {
-                setNotifications(response.notifications);
-            } else {
-                setNotifications(prev => [...prev, ...response.notifications]);
-            }
+            // Merge new notifications with existing ones (for pagination)
+            const merged: Notification[] = pageNum === 0 ? response.notifications : [...notifications, ...response.notifications];
+
+            // Deduplicate FOLLOW notifications: keep only the most recent notification per followerId
+            const deduped = dedupeFollowNotifications(merged);
+
+            setNotifications(deduped);
 
             setUnreadCount(response.unreadCount);
             setPage(response.page);
@@ -51,6 +53,53 @@ const NotificationsList = ({ onClose }: NotificationsListProps) => {
             setIsLoading(false);
             setIsLoadingMore(false);
         }
+    };
+
+    // Utility: remove duplicate FOLLOW notifications coming from the same follower
+    // Keeps only the most recent notification per followerId (based on createdAt)
+    const dedupeFollowNotifications = (list: Notification[]): Notification[] => {
+        // Map to store latest notification per followerId
+        const latestMap = new Map<string, Notification>();
+
+        // First, consider non-FOLLOW notifications by pushing them directly into an array
+        // but for FOLLOW notifications, track the latest by followerId
+        const others: Notification[] = [];
+
+        for (const notif of list) {
+            if (notif.type === 'FOLLOW') {
+                const payload = notif.payload as any; // FollowNotificationPayload
+                const fid = payload?.followerId;
+                if (!fid) {
+                    // malformed, push to others to not lose it
+                    others.push(notif);
+                    continue;
+                }
+
+                const existing = latestMap.get(fid);
+                if (!existing) {
+                    latestMap.set(fid, notif);
+                } else {
+                    // compare createdAt to keep the most recent
+                    const existingTime = new Date(existing.createdAt).getTime();
+                    const newTime = new Date(notif.createdAt).getTime();
+                    if (newTime > existingTime) {
+                        latestMap.set(fid, notif);
+                    }
+                }
+            } else {
+                others.push(notif);
+            }
+        }
+
+        // Combine others with the deduped follow notifications
+        const dedupedFollows = Array.from(latestMap.values());
+
+        // Final list: combine and sort by createdAt desc (most recent first)
+        const finalList = [...others, ...dedupedFollows].sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        return finalList;
     };
 
     // Fonction pour charger plus de notifications
