@@ -41,7 +41,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
     }
 
     const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -64,7 +64,7 @@ export const markAllNotificationsAsRead = async (): Promise<void> => {
     }
 
     const response = await fetch(`${API_URL}/notifications/read-all`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -76,3 +76,10 @@ export const markAllNotificationsAsRead = async (): Promise<void> => {
         throw new Error(errorData?.message || `Erreur ${response.status}`);
     }
 };
+
+/**
+ * Crée une notification pour un utilisateur destinataire
+ * @param recipientId ID de l'utilisateur destinataire
+ * @param type Type de notification (ex: 'COMMENT')
+ * @param payload Payload spécifique au type
+ */

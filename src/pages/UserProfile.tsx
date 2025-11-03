@@ -187,7 +187,7 @@ const UserProfile = () => {
                     src={state.user.avatarUrl}
                     alt={state.user.username}
                   />
-                  <AvatarFallback className="bg-stragram-primary text-white text-2xl">
+                  <AvatarFallback className="text-muted-foreground bg-muted">
                     {state.user.username[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

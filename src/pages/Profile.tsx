@@ -21,6 +21,8 @@ const Profile = () => {
     username: "lucashergz20",
     location: "Paris, France",
     bio: "Des petits postes tous les jours, n'hésitez pas !",
+    // Ajout de avatarUrl pour correspondre à l'usage dans le JSX
+    avatarUrl: null,
     socialLinks: {
       tiktok: "@lucashergz20",
       youtube: "Lucas Hergz",

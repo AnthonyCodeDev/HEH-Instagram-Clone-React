@@ -14,12 +14,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export type Comment = {
     id?: string;
     author: string;
-    avatar: string | null;  // Changé pour correspondre à l'API
+    avatar: string | null;
     text: string;
     createdAt?: string;
     authorId?: string;
     authorUsername?: string;
-    authorAvatarUrl?: string | null;  // Changé pour correspondre à l'API
+    authorAvatarUrl?: string | null;
     postId?: string;
 };
 
@@ -39,7 +39,7 @@ export type PostUser = {
     id?: string;
     name: string;
     username: string;
-    avatar: string | null;  // Changé pour correspondre à l'API
+    avatar: string | null;
 };
 
 export type PostData = {
@@ -50,8 +50,8 @@ export type PostData = {
     image?: string;
     comments: Comment[];
     commentCount?: number;
-    authorId?: string; // Ajout de l'ID de l'auteur directement dans le post
-    isDeleting?: boolean; // Pour l'animation de suppression
+    authorId?: string;
+    isDeleting?: boolean;
 };
 
 interface PostState {
@@ -67,10 +67,10 @@ interface PostWithCommentsProps {
     onLike: (index: number) => void;
     onSave: (index: number) => void;
     onAddComment: (postIndex: number, comment: Comment) => void;
-    onDeletePost?: (postId: string) => Promise<void>; // Fonction pour supprimer un post
-    isLiking?: Record<string, boolean>; // Pour suivre l'état de chargement des likes
-    isSaving?: Record<string, boolean>; // Pour suivre l'état de chargement des favoris
-    currentUserId?: string; // ID de l'utilisateur connecté
+    onDeletePost?: (postId: string) => Promise<void>;
+    isLiking?: Record<string, boolean>;
+    isSaving?: Record<string, boolean>;
+    currentUserId?: string;
 }
 
 const PostWithComments = ({
@@ -87,7 +87,7 @@ const PostWithComments = ({
 }: PostWithCommentsProps) => {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [visible, setVisible] = useState(3);
-    const [newComment, setNewComment] = useState("");
+    // removed local newComment state: CommentInput gère sa propre valeur
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLoadingComments, setIsLoadingComments] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -254,8 +254,9 @@ const PostWithComments = ({
     const shown = comments.slice(0, visible);
     const hasMore = comments.length > visible || hasMoreComments;
 
-    const handleAddComment = async () => {
-        const commentText = newComment.trim();
+    // Accept a text parameter to avoid relying on a possibly stale parent state
+    const handleAddComment = async (text?: string) => {
+        const commentText = (text ?? "").trim();
         if (commentText === "") return;
 
         setIsSubmittingComment(true);
@@ -263,7 +264,6 @@ const PostWithComments = ({
         try {
             // Envoyer le commentaire à l'API
             const commentData = await postComment(post.id, commentText);
-            // console.log('Commentaire ajouté avec succès:', commentData);
 
             // Créer un objet commentaire à partir de la réponse de l'API
             const commentToAdd = {
@@ -282,17 +282,12 @@ const PostWithComments = ({
             setComments(prevComments => [commentToAdd, ...prevComments]);
 
             // Mettre à jour le compteur de commentaires dans le post (si nécessaire)
-            // Cette ligne est un hack pour forcer la mise à jour de l'UI, mais normalement
-            // ce serait géré par le composant parent qui mettrait à jour le post
             if (post.commentCount !== undefined) {
                 post.commentCount += 1;
             }
 
             // Appeler la fonction de callback pour ajouter le commentaire (pour compatibilité)
             onAddComment(postIndex, commentToAdd);
-
-            // Réinitialiser le champ de commentaire
-            setNewComment("");
 
             // Afficher un message de succès (optionnel)
             toast({
@@ -465,7 +460,7 @@ const PostWithComments = ({
                 <div className="px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
-                            className={`flex items-center gap-2 transition-colors ${postState.liked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`flex items-center gap-2 transition-all duration-150 ${postState.liked ? 'bg-[#EC3558] text-white rounded-md px-2 py-1' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 rounded-md px-2 py-1'}`}
                             onClick={() => onLike(postIndex)}
                             disabled={isLiking[post.id]}
                         >
@@ -479,7 +474,7 @@ const PostWithComments = ({
                     </div>
 
                     <button
-                        className={`transition-colors ${postState.saved ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
+                        className={`transition-all duration-150 ${postState.saved ? 'bg-[#EC3558] text-white rounded-md p-2' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-md p-2'}`}
                         onClick={() => onSave(postIndex)}
                         aria-label="Enregistrer pour plus tard"
                         disabled={isSaving[post.id]}
@@ -498,8 +493,7 @@ const PostWithComments = ({
                     <div className="mb-4">
                         <CommentInput
                             onSubmit={async (text) => {
-                                setNewComment(text);
-                                await handleAddComment();
+                                await handleAddComment(text);
                             }}
                             isSubmitting={isSubmittingComment}
                         />

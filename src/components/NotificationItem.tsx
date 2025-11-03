@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -29,8 +29,33 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
         locale: fr
     });
 
-    // Gérer le clic sur la notification
-    const handleClick = async () => {
+    // Gérer le clic qui doit marquer comme lu (utilisé par les liens aussi)
+    const handleClick = async (e?: React.MouseEvent) => {
+        // si appelé depuis un bouton ou un lien, on laisse la navigation se produire
+        if (e) e.stopPropagation();
+
+        if (!notification.read) {
+            try {
+                setIsLoading(true);
+                await markNotificationAsRead(notification.id);
+                onMarkAsRead(notification.id);
+            } catch (error) {
+                toast({
+                    title: "Erreur",
+                    description: "Impossible de marquer la notification comme lue",
+                    variant: "destructive"
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    // Clic spécifique sur la petite "case" (dot) : marquer comme lu, mais ne pas rediriger
+    const handleDotClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+
         if (!notification.read) {
             try {
                 setIsLoading(true);
@@ -112,45 +137,43 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
 
     // Déterminer l'avatar en fonction du type de notification
     const getAvatarInfo = () => {
+        const payload: any = notification.payload || {};
+        const takeFallback = (s: unknown) => {
+            if (typeof s === 'string' && s.length > 0) return s.substring(0, 2).toUpperCase();
+            return 'ST';
+        };
+
         switch (notification.type) {
-            case 'LIKE':
-                return {
-                    username: (notification.payload as any).likerUsername,
-                    fallback: (notification.payload as any).likerUsername.substring(0, 2).toUpperCase()
-                };
-            case 'COMMENT':
-                return {
-                    username: (notification.payload as any).commenterUsername,
-                    fallback: (notification.payload as any).commenterUsername.substring(0, 2).toUpperCase()
-                };
-            case 'FOLLOW':
-                return {
-                    username: (notification.payload as any).followerUsername,
-                    fallback: (notification.payload as any).followerUsername.substring(0, 2).toUpperCase()
-                };
+            case 'LIKE': {
+                const username = payload.likerUsername || 'Stragram';
+                return { username, fallback: takeFallback(payload.likerUsername) };
+            }
+            case 'COMMENT': {
+                const username = payload.commenterUsername || 'Stragram';
+                return { username, fallback: takeFallback(payload.commenterUsername) };
+            }
+            case 'FOLLOW': {
+                const username = payload.followerUsername || 'Stragram';
+                return { username, fallback: takeFallback(payload.followerUsername) };
+            }
             default:
-                return {
-                    username: "Stragram",
-                    fallback: "ST"
-                };
+                return { username: 'Stragram', fallback: 'ST' };
         }
     };
 
     const avatarInfo = getAvatarInfo();
 
     return (
-        <Link
-            to={getDestinationUrl()}
+        <div
             className={cn(
                 "flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0",
                 notification.read ? "bg-white" : "bg-blue-50",
                 isLoading && "opacity-70 pointer-events-none"
             )}
-            onClick={handleClick}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
-            <div className="shrink-0 relative">
+            <Link to={getDestinationUrl()} onClick={handleClick} className="shrink-0 relative">
                 <Avatar className="w-10 h-10">
                     <AvatarImage src={`https://api.dicebear.com/7.x/micah/svg?seed=${avatarInfo.username}`} alt={avatarInfo.username} />
                     <AvatarFallback>{avatarInfo.fallback}</AvatarFallback>
@@ -158,21 +181,27 @@ const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps)
                 <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full">
                     {getIcon()}
                 </div>
-            </div>
+            </Link>
 
             <div className="flex-1 min-w-0">
                 <div className="text-sm text-gray-700">
-                    {getNotificationText()}
+                    <Link to={getDestinationUrl()} onClick={handleClick} className="hover:underline">
+                        {getNotificationText()}
+                    </Link>
                 </div>
                 <div className="text-xs text-gray-500 mt-1" title={fullDate}>
                     {formattedDate}
                 </div>
             </div>
 
-            {!notification.read && (
-                <div className="shrink-0 w-2 h-2 rounded-full bg-stragram-primary mt-2"></div>
-            )}
-        </Link>
+            {!notification.read ? (
+                <button
+                    aria-label="Marquer la notification comme lue"
+                    onClick={handleDotClick}
+                    className="shrink-0 w-3 h-3 rounded-full bg-stragram-primary mt-2 focus:outline-none"
+                />
+            ) : null}
+        </div>
     );
 };
 
