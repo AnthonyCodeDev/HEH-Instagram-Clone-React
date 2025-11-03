@@ -3,16 +3,13 @@ import { Camera, MapPin, Calendar, Link as LinkIcon, Settings } from "lucide-rea
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import sunsetBeach from "@/assets/sunset-beach.jpg";
 
 const Profile = () => {
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Profile data state
@@ -69,7 +66,7 @@ const Profile = () => {
 
               {/* Profile Picture */}
               <div className="absolute bottom-6 left-6">
-                <Avatar className="w-32 h-32 border-4 border-white">
+                <Avatar className="w-32 h-32">
                   <AvatarImage
                     src={undefined}
                     alt="Lucas Hergz"
@@ -78,7 +75,7 @@ const Profile = () => {
                     LH
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+                {/* connection badge removed per request */}
               </div>
 
               {/* Edit Profile Button */}

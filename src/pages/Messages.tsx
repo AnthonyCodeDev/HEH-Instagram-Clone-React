@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

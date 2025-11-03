@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import axios from "axios";
-import logoImage from "@/assets/stragram-logo.png";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);

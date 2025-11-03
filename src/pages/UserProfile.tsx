@@ -182,7 +182,7 @@ const UserProfile = () => {
 
               {/* Profile Picture */}
               <div className="absolute bottom-4 left-6">
-                <Avatar className="w-24 h-24 border-4 border-white">
+                <Avatar className="w-24 h-24">
                   <AvatarImage
                     src={state.user.avatarUrl}
                     alt={state.user.username}
@@ -191,7 +191,7 @@ const UserProfile = () => {
                     {state.user.username[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+                {/* connection badge removed per request */}
               </div>
 
               {/* Bouton Éditer le profil ou Envoyer un message */}

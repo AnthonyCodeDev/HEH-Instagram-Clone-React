@@ -6,7 +6,7 @@ import RightBar from "@/components/RightBar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
-import PostWithComments, { Comment, PostData } from "@/components/PostWithComments";
+import PostWithComments, { PostData } from "@/components/PostWithComments";
 
 
 // Type pour la réponse de l'API des posts récents
