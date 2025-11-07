@@ -1,159 +1,474 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Send } from "lucide-react";
+import { Search, Send, Loader2, AlertCircle, Wifi, WifiOff, Trash2 } from "lucide-react";
+import { messageService } from "@/services/messageService";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { ConversationDto, MessageDto } from "@/types/message";
+import { userService } from "@/services/userService";
+import { format, isToday, isYesterday } from "date-fns";
+import { fr } from "date-fns/locale";
 
-// Données fictives pour les conversations
-const conversations = [
-    {
-        id: "1",
-        user: {
-            name: "Lucas Hergz",
-            username: "lucashergz20",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-            status: "En ligne"
-        },
-        lastMessage: "Salut, tu es dispo pour parler ?",
-        messages: [
-            { id: "m1", sender: "them", content: "Hello ! Comment ça va ?", time: "10:24" },
-            { id: "m2", sender: "me", content: "Super et toi ? Je bosse sur Stragram ;)", time: "10:25" },
-            { id: "m3", sender: "them", content: "Ça avance bien ? J'ai hâte de voir ça !", time: "10:26" },
-            { id: "m4", sender: "me", content: "Oui, je suis en train de finaliser la page de messages justement", time: "10:27" },
-            { id: "m5", sender: "them", content: "Génial ! Tu me montres quand c'est prêt ?", time: "10:28" }
-        ]
-    },
-    {
-        id: "2",
-        user: {
-            name: "Marie Marind",
-            username: "mariemaring",
-            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
-            status: "Hors ligne"
-        },
-        lastMessage: "Merci pour ton aide !",
-        messages: [
-            { id: "m1", sender: "me", content: "Salut Marie, comment vas-tu ?", time: "Hier" },
-            { id: "m2", sender: "them", content: "Très bien merci ! Et toi ?", time: "Hier" },
-            { id: "m3", sender: "me", content: "Super ! J'avais une question sur le projet", time: "Hier" },
-            { id: "m4", sender: "them", content: "Bien sûr, dis-moi tout", time: "Hier" },
-            { id: "m5", sender: "me", content: "Comment on fait pour intégrer l'API ?", time: "Hier" },
-            { id: "m6", sender: "them", content: "C'est simple, je t'envoie un exemple de code", time: "Hier" },
-            { id: "m7", sender: "me", content: "Merci beaucoup !", time: "Hier" },
-            { id: "m8", sender: "them", content: "Merci pour ton aide !", time: "Hier" }
-        ]
-    },
-    {
-        id: "3",
-        user: {
-            name: "Tom Berton",
-            username: "tomberton",
-            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-            status: "En ligne"
-        },
-        lastMessage: "On se voit demain ?",
-        messages: [
-            { id: "m1", sender: "them", content: "Hey, ça te dit d'aller au cinéma demain ?", time: "09:15" },
-            { id: "m2", sender: "me", content: "Oui pourquoi pas ! Quel film ?", time: "09:20" },
-            { id: "m3", sender: "them", content: "Le nouveau Nolan, il paraît qu'il est génial", time: "09:22" },
-            { id: "m4", sender: "me", content: "Parfait ! Quelle séance ?", time: "09:25" },
-            { id: "m5", sender: "them", content: "19h30 ça te va ?", time: "09:26" },
-            { id: "m6", sender: "me", content: "Nickel, on se retrouve devant le cinéma ?", time: "09:28" },
-            { id: "m7", sender: "them", content: "On se voit demain ?", time: "09:30" }
-        ]
-    },
-    {
-        id: "4",
-        user: {
-            name: "Lucie Marinier",
-            username: "luciemarinier10",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400",
-            status: "Inactive"
-        },
-        lastMessage: "Nouvelle conversation",
-        messages: []
-    }
-];
+// Type pour les utilisateurs de la recherche
+interface SearchUser {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+    bio?: string;
+}
 
 const Messages = () => {
-    // State pour stocker toutes les conversations (pour pouvoir les modifier)
-    const [allConversations, setAllConversations] = useState(conversations);
-    const [activeConversationId, setActiveConversationId] = useState(conversations[0].id);
+    const [conversations, setConversations] = useState<ConversationDto[]>([]);
+    const [messages, setMessages] = useState<Record<string, MessageDto[]>>({});
+    const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [loadingMessages, setLoadingMessages] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
+    const [backendAvailable, setBackendAvailable] = useState(false); // Commencer à false, sera mis à true si le backend répond
+    const [searchUsers, setSearchUsers] = useState<SearchUser[]>([]); // Résultats de recherche d'utilisateurs
+    const [isSearching, setIsSearching] = useState(false); // État de chargement de la recherche
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false); // Afficher le dropdown de recherche
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+    const searchDropdownRef = useRef<HTMLDivElement>(null);
 
-    // Fonction pour changer de conversation active et mettre à jour l'URL
-    const handleConversationChange = (conversationId: string) => {
-        setActiveConversationId(conversationId);
-        // Mettre à jour l'URL pour supprimer le paramètre u
-        navigate("/messages");
-    };
-
-    // Vérifier s'il y a un paramètre d'URL pour un utilisateur spécifique
-    useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search);
-        const userParam = searchParams.get('u');
-
-        if (userParam) {
-            // Trouver la conversation avec cet utilisateur
-            const conversation = allConversations.find(conv => conv.user.username === userParam);
-            if (conversation) {
-                setActiveConversationId(conversation.id);
-            }
+    // Fonction pour rechercher des utilisateurs
+    const handleSearchUsers = async (query: string) => {
+        if (!query || query.trim() === "") {
+            setSearchUsers([]);
+            setShowSearchDropdown(false);
+            return;
         }
-    }, [allConversations]);
 
-    // Trouver la conversation active
-    const activeConversation = allConversations.find(conv => conv.id === activeConversationId) || allConversations[0];
+        try {
+            setIsSearching(true);
+            const token = localStorage.getItem('token');
+            const url = `http://localhost:8081/users/search?query=${encodeURIComponent(query)}&page=0&size=10`;
 
-    const filteredConversations = allConversations.filter(conv =>
-        conv.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
 
-    // Fonction pour scroller jusqu'au dernier message
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            const response = await fetch(url, { headers });
+            if (!response.ok) throw new Error(`Erreur ${response.status}`);
+
+            const data = await response.json();
+            setSearchUsers(data.users || []);
+            setShowSearchDropdown(true);
+        } catch (error) {
+            console.error('Erreur recherche utilisateurs:', error);
+            setSearchUsers([]);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
-    // Scroll automatique quand on change de conversation ou au chargement initial
+    // Debounce pour la recherche
     useEffect(() => {
-        scrollToBottom();
-    }, [activeConversation]);
+        const delayDebounceFn = setTimeout(() => {
+            if (searchQuery.trim() !== "") {
+                handleSearchUsers(searchQuery);
+            } else {
+                setSearchUsers([]);
+                setShowSearchDropdown(false);
+            }
+        }, 300);
 
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newMessage.trim() === "") return;
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
 
-        // Créer un nouveau message
-        const newMessageObj = {
-            id: `m${Date.now()}`, // ID unique basé sur le timestamp
-            sender: "me",
-            content: newMessage,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    // Fermer le dropdown quand on clique ailleurs
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
+                setShowSearchDropdown(false);
+            }
         };
 
-        // Mettre à jour la conversation avec le nouveau message
-        setAllConversations(prevConversations =>
-            prevConversations.map(conv =>
-                conv.id === activeConversationId
-                    ? {
-                        ...conv,
-                        messages: [...conv.messages, newMessageObj],
-                        lastMessage: newMessage // Mettre à jour le dernier message
-                    }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Ouvrir une conversation avec un utilisateur depuis la recherche
+    const handleOpenConversationWithUser = async (username: string) => {
+        setShowSearchDropdown(false);
+        setSearchQuery("");
+        navigate(`/messages?u=${username}`);
+    };
+
+    // Callback pour recevoir les messages WebSocket
+    const handleMessageReceived = useCallback((message: MessageDto) => {
+        console.log('📨 New message received:', message);
+
+        // Vérifier si c'est notre propre message (déjà affiché en optimiste)
+        const isOwnMessage = message.senderId === currentUserId;
+
+        // Ajouter ou remplacer le message dans la conversation
+        setMessages(prev => {
+            const existingMessages = prev[message.conversationId] || [];
+
+            if (isOwnMessage) {
+                // Si c'est notre message, remplacer le message temporaire par le vrai
+                // Trouver un message temporaire récent (moins de 5 secondes) avec le même contenu
+                const tempMessageIndex = existingMessages.findIndex(msg =>
+                    msg.id.startsWith('temp-') &&
+                    msg.content === message.content &&
+                    msg.senderId === currentUserId
+                );
+
+                if (tempMessageIndex !== -1) {
+                    // Remplacer le message temporaire par le vrai
+                    const updatedMessages = [...existingMessages];
+                    updatedMessages[tempMessageIndex] = message;
+                    return {
+                        ...prev,
+                        [message.conversationId]: updatedMessages
+                    };
+                }
+            }
+
+            // Vérifier si le message existe déjà (par ID)
+            const messageExists = existingMessages.some(msg => msg.id === message.id);
+            if (messageExists) {
+                console.log('⚠️ Message déjà présent, ignoré');
+                return prev;
+            }
+
+            // Ajouter le nouveau message
+            return {
+                ...prev,
+                [message.conversationId]: [...existingMessages, message]
+            };
+        });
+
+        // Mettre à jour la conversation dans la liste
+        setConversations(prev => prev.map(conv => {
+            if (conv.id === message.conversationId) {
+                return {
+                    ...conv,
+                    lastMessage: message,
+                    unreadCount: message.senderId !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount,
+                    updatedAt: message.sentAt
+                };
+            }
+            return conv;
+        }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+
+        // Si la conversation est active, marquer comme lu
+        if (message.conversationId === activeConversationId && message.senderId !== currentUserId) {
+            messageService.markAsRead(message.conversationId).catch(console.error);
+            // Pas besoin de déclencher l'événement ici car le message est marqué comme lu
+        } else if (message.senderId !== currentUserId) {
+            // Si le message n'est pas lu, déclencher l'événement pour mettre à jour le compteur
+            window.dispatchEvent(new CustomEvent('unreadMessagesChanged'));
+        }
+    }, [activeConversationId, currentUserId]);
+
+    // Callback pour recevoir les notifications de frappe
+    const handleTypingReceived = useCallback((typing: any) => {
+        console.log('⌨️ Typing notification:', typing);
+
+        const { userId, conversationId } = typing;
+
+        // Effacer le timeout précédent si existe
+        if (typingTimeoutRef.current[userId]) {
+            clearTimeout(typingTimeoutRef.current[userId]);
+        }
+
+        // Marquer l'utilisateur comme en train d'écrire
+        setTypingUsers(prev => ({ ...prev, [conversationId]: true }));
+
+        // Supprimer après 3 secondes
+        typingTimeoutRef.current[userId] = setTimeout(() => {
+            setTypingUsers(prev => ({ ...prev, [conversationId]: false }));
+        }, 3000);
+    }, []);
+
+    // Initialiser la connexion WebSocket (seulement si le backend est disponible)
+    const { isConnected, sendMessage: wsSendMessage, sendTyping, error: wsError } = useWebSocket(
+        handleMessageReceived,
+        handleTypingReceived,
+        { enabled: backendAvailable } // Ne connecter que si le backend est disponible
+    );
+
+    // Récupérer l'utilisateur courant
+    useEffect(() => {
+        userService.getCurrentUser().then(user => {
+            if (user) {
+                setCurrentUserId(user.id);
+            }
+        }).catch(console.error);
+    }, []);
+
+    // Charger les conversations au montage
+    useEffect(() => {
+        loadConversations();
+    }, []);
+
+    const loadConversations = async () => {
+        // console.log('🚀 [Messages] Début du chargement des conversations...');
+        try {
+            setLoading(true);
+            setError(null);
+            const convs = await messageService.getConversations();
+
+            // console.log('📊 [Messages] Résultat:', convs.length, 'conversations reçues');
+
+            // Si on arrive ici sans erreur, le backend est disponible (même si 0 conversations)
+            // console.log('✅ [Messages] Backend disponible !');
+            setBackendAvailable(true);
+            setConversations(convs);
+
+            // Si pas de conversation active et qu'il y en a, sélectionner la première
+            if (!activeConversationId && convs.length > 0) {
+                // console.log('📌 [Messages] Sélection de la première conversation:', convs[0].id);
+                setActiveConversationId(convs[0].id);
+            }
+        } catch (err) {
+            console.error('❌ [Messages] Erreur lors du chargement:', err);
+            setBackendAvailable(false);
+            setError('Serveur déconnecté');
+        } finally {
+            setLoading(false);
+            // console.log('🏁 [Messages] Fin du chargement');
+        }
+    };
+
+    // Gérer le paramètre URL pour ouvrir une conversation avec un utilisateur
+    useEffect(() => {
+        const userParam = searchParams.get('u');
+        if (!userParam) return;
+
+        const createConversationWithUser = async () => {
+            try {
+                // Trouver l'utilisateur par username
+                const user = await userService.getUserByUsername(userParam);
+
+                // Créer ou récupérer la conversation
+                const conversation = await messageService.getOrCreateConversation(user.id);
+
+                // Ajouter à la liste si pas déjà présent
+                setConversations(prev => {
+                    const exists = prev.find(c => c.id === conversation.id);
+                    if (exists) return prev;
+                    return [conversation, ...prev];
+                });
+
+                // Sélectionner cette conversation
+                setActiveConversationId(conversation.id);
+
+                // Nettoyer l'URL
+                navigate('/messages', { replace: true });
+            } catch (err) {
+                console.error('Error creating conversation:', err);
+                setError(`Impossible de créer une conversation avec ${userParam}`);
+            }
+        };
+
+        createConversationWithUser();
+    }, [searchParams, navigate]);
+
+    // Charger les messages quand on change de conversation
+    useEffect(() => {
+        if (!activeConversationId) return;
+
+        const loadMessages = async () => {
+            // Si déjà chargés, pas besoin de recharger
+            if (messages[activeConversationId]) return;
+
+            try {
+                setLoadingMessages(true);
+                const msgs = await messageService.getConversationMessages(activeConversationId);
+                setMessages(prev => ({
+                    ...prev,
+                    [activeConversationId]: msgs
+                }));
+
+                // Marquer comme lu
+                await messageService.markAsRead(activeConversationId);
+
+                // Mettre à jour le compteur de non lus
+                setConversations(prev => prev.map(conv =>
+                    conv.id === activeConversationId
+                        ? { ...conv, unreadCount: 0 }
+                        : conv
+                ));
+            } catch (err) {
+                console.error('Error loading messages:', err);
+            } finally {
+                setLoadingMessages(false);
+            }
+        };
+
+        loadMessages();
+    }, [activeConversationId]);
+
+    // Variables calculées (avant les useEffect qui les utilisent)
+    const activeConversation = conversations.find(c => c.id === activeConversationId);
+    const activeMessages = activeConversationId ? (messages[activeConversationId] || []) : [];
+
+    const filteredConversations = conversations.filter(conv =>
+        conv.otherUserUsername.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (conv.lastMessage?.content || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const isTyping = activeConversationId ? typingUsers[activeConversationId] : false;
+
+    // Scroll automatique vers le bas
+    const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+        }
+    };
+
+    // Scroller au chargement initial et quand les messages changent
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, activeConversationId]);
+
+    // Scroller aussi après le chargement des messages
+    useEffect(() => {
+        if (!loadingMessages && activeMessages.length > 0) {
+            // Petit délai pour s'assurer que le DOM est bien mis à jour
+            setTimeout(() => scrollToBottom(), 100);
+        }
+    }, [loadingMessages, activeMessages.length]);
+
+    // Changer de conversation
+    const handleConversationChange = async (conversationId: string) => {
+        setActiveConversationId(conversationId);
+
+        // Marquer comme lu
+        try {
+            await messageService.markAsRead(conversationId);
+            setConversations(prev => prev.map(conv =>
+                conv.id === conversationId
+                    ? { ...conv, unreadCount: 0 }
                     : conv
-            )
-        );
+            ));
 
-        // Vider le champ de saisie
+            // Déclencher un événement pour rafraîchir le compteur dans la sidebar
+            window.dispatchEvent(new CustomEvent('unreadMessagesChanged'));
+        } catch (err) {
+            console.error('Error marking as read:', err);
+        }
+    };
+
+    // Envoyer un message
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !activeConversationId || !isConnected || !currentUserId) return;
+
+        const activeConv = conversations.find(c => c.id === activeConversationId);
+        if (!activeConv) return;
+
+        const messageContent = newMessage.trim();
+
+        // Récupérer l'utilisateur actuel pour avoir avatar et username
+        const currentUser = await userService.getCurrentUser();
+        if (!currentUser) return;
+
+        // Créer un message optimiste (affichage immédiat avant la réponse du serveur)
+        const optimisticMessage: MessageDto = {
+            id: `temp-${Date.now()}`, // ID temporaire
+            conversationId: activeConversationId,
+            senderId: currentUserId,
+            senderUsername: currentUser.username,
+            senderAvatarUrl: currentUser.avatarUrl || '',
+            content: messageContent,
+            sentAt: new Date().toISOString(),
+            isRead: false,
+            readAt: null
+        };
+
+        // Ajouter le message optimistiquement à l'interface
+        setMessages(prev => ({
+            ...prev,
+            [activeConversationId]: [...(prev[activeConversationId] || []), optimisticMessage]
+        }));
+
+        // Mettre à jour la conversation dans la liste
+        setConversations(prev => prev.map(conv => {
+            if (conv.id === activeConversationId) {
+                return {
+                    ...conv,
+                    lastMessage: optimisticMessage,
+                    updatedAt: optimisticMessage.sentAt
+                };
+            }
+            return conv;
+        }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+
+        // Envoyer via WebSocket
+        wsSendMessage({
+            receiverId: activeConv.otherUserId,
+            content: messageContent
+        });
+
         setNewMessage("");
+    };
 
-        // Scroll après l'envoi d'un message
-        setTimeout(scrollToBottom, 100);
+    // Gérer la frappe (typing indicator)
+    const handleTyping = () => {
+        if (!activeConversationId || !isConnected) return;
+
+        const activeConv = conversations.find(c => c.id === activeConversationId);
+        if (!activeConv) return;
+
+        sendTyping(activeConv.otherUserId);
+    };
+
+    // Supprimer une conversation
+    const handleDeleteConversation = async () => {
+        if (!activeConversationId) return;
+
+        // console.log('🗑️ [Messages] Suppression de la conversation:', activeConversationId);
+
+        try {
+            await messageService.deleteConversation(activeConversationId);
+
+            // Retirer la conversation de la liste
+            setConversations(prev => prev.filter(conv => conv.id !== activeConversationId));
+
+            // Retirer les messages de cette conversation
+            setMessages(prev => {
+                const newMessages = { ...prev };
+                delete newMessages[activeConversationId];
+                return newMessages;
+            });
+
+            // Désélectionner la conversation
+            setActiveConversationId(null);
+
+            // Déclencher un événement pour rafraîchir le compteur dans la sidebar
+            window.dispatchEvent(new CustomEvent('unreadMessagesChanged'));
+
+            // console.log('✅ [Messages] Conversation supprimée localement');
+        } catch (err) {
+            console.error('❌ [Messages] Erreur suppression:', err);
+            alert('Erreur lors de la suppression de la conversation');
+        }
+    };
+
+    // Formater la date des messages
+    const formatMessageTime = (dateString: string) => {
+        const date = new Date(dateString);
+        if (isToday(date)) {
+            return format(date, 'HH:mm');
+        } else if (isYesterday(date)) {
+            return 'Hier';
+        } else {
+            return format(date, 'dd/MM/yyyy', { locale: fr });
+        }
     };
 
     return (
@@ -178,112 +493,234 @@ const Messages = () => {
                         >
                             Messages
                         </h1>
+                        {/* Indicateur de connexion WebSocket */}
+                        <div className="flex items-center gap-2">
+                            {isConnected ? (
+                                <div className="flex items-center gap-1 text-green-600 text-sm">
+                                    <Wifi className="w-4 h-4" />
+                                    <span className="hidden md:inline">Connecté</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1 text-gray-400 text-sm">
+                                    <WifiOff className="w-4 h-4" />
+                                    <span className="hidden md:inline">Déconnecté</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-12 md:grid-cols-12 grid-rows-[100px_1fr] md:grid-rows-1 gap-6 h-[calc(100vh-10rem)]">
-                        {/* Conversations list */}
-                        <div className="col-span-12 md:col-span-4 bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col md:max-h-full max-h-[100px]">
-                            <div className="p-4 border-b border-gray-100 flex-shrink-0 md:block hidden">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Rechercher..."
-                                        className="w-full h-10 pl-10 pr-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EC3558]"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                </div>
-                            </div>
-                            <div className="divide-y divide-gray-100 overflow-y-auto flex-1 md:max-h-[calc(100vh-15rem)] flex md:flex-col flex-row flex-nowrap py-2">
-                                {filteredConversations.map((conversation) => (
-                                    <div
-                                        key={conversation.id}
-                                        className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation.id === conversation.id ? 'bg-gray-50' : ''} md:w-full w-auto md:mb-0 mb-0 flex-shrink-0`}
-                                        onClick={() => handleConversationChange(conversation.id)}
-                                    >
-                                        <div className="relative flex-shrink-0">
-                                            <Avatar className="w-10 h-10">
-                                                <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
-                                                <AvatarFallback>{conversation.user.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${conversation.user.status === "En ligne" ? "bg-green-500" : "bg-gray-300"}`}></div>
-                                        </div>
-                                        <div className="flex-1 min-w-0 hidden sm:block lg:block">
-                                            <div className="font-medium text-gray-900">
-                                                {conversation.user.name}
-                                            </div>
-                                            <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Erreur globale ou information */}
+                    {(error || wsError) && (
+                        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-yellow-700">
+                            <AlertCircle className="w-5 h-5" />
+                            <span>{error || wsError}</span>
                         </div>
+                    )}
 
-                        {/* Active conversation */}
-                        <div className="col-span-12 md:col-span-8 bg-white rounded-xl border border-gray-200 flex flex-col">
-                            <div className="p-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-                                <div>
-                                    <Avatar className="w-10 h-10">
-                                        <AvatarImage src={activeConversation.user.avatar} alt={activeConversation.user.name} />
-                                        <AvatarFallback>{activeConversation.user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                </div>
-                                <div>
-                                    <div className="font-semibold text-gray-900">
-                                        {activeConversation.user.name}
+                    {/* Chargement */}
+                    {loading ? (
+                        <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
+                            <Loader2 className="w-8 h-8 animate-spin text-[#EC3558]" />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-12 md:grid-cols-12 grid-rows-[100px_1fr] md:grid-rows-1 gap-6 h-[calc(100vh-10rem)]">
+                            {/* Conversations list */}
+                            <div className="col-span-12 md:col-span-4 bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col md:max-h-full max-h-[100px]">
+                                <div className="p-4 border-b border-gray-100 flex-shrink-0 md:block hidden">
+                                    <div className="relative" ref={searchDropdownRef}>
+                                        <input
+                                            type="text"
+                                            placeholder="Rechercher des personnes..."
+                                            className="w-full h-10 pl-10 pr-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EC3558]"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onFocus={() => {
+                                                if (searchQuery.trim() !== "") {
+                                                    setShowSearchDropdown(true);
+                                                }
+                                            }}
+                                        />
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+
+                                        {/* Dropdown de recherche */}
+                                        {showSearchDropdown && (
+                                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-auto">
+                                                {isSearching && (
+                                                    <div className="flex justify-center items-center py-4">
+                                                        <Loader2 className="w-5 h-5 animate-spin text-[#EC3558]" />
+                                                        <span className="ml-2 text-sm text-gray-500">Recherche...</span>
+                                                    </div>
+                                                )}
+
+                                                {!isSearching && searchUsers.length > 0 && searchUsers.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                                                        onClick={() => handleOpenConversationWithUser(user.username)}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="w-10 h-10">
+                                                                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                                                <AvatarFallback className="bg-[#EC3558] text-white">
+                                                                    {user.username.substring(0, 2).toUpperCase()}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-sm text-gray-900">{user.username}</p>
+                                                                {user.bio && <p className="text-xs text-gray-500 truncate">{user.bio}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {!isSearching && searchUsers.length === 0 && searchQuery.trim() !== "" && (
+                                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                                        Aucun utilisateur trouvé
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-gray-500">{activeConversation.user.status}</p>
                                 </div>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 md:max-h-[calc(100vh-15rem)] max-h-[calc(100vh-22rem)]">
-                                {activeConversation.messages.length === 0 ? (
-                                    <div className="flex items-center justify-center h-full">
-                                        <div className="text-center text-gray-500">
-                                            <p className="mb-2 font-medium">Aucun message</p>
-                                            <p className="text-sm">Commencez la conversation</p>
+                                <div className="divide-y divide-gray-100 overflow-y-auto flex-1 md:max-h-[calc(100vh-15rem)] flex md:flex-col flex-row flex-nowrap py-2">
+                                    {filteredConversations.length === 0 ? (
+                                        <div className="flex items-center justify-center h-full p-4 text-gray-500 text-center">
+                                            <p>Aucune conversation</p>
                                         </div>
-                                    </div>
-                                ) : (
-                                    activeConversation.messages.map((message) => (
-                                        <div key={message.id} className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                                    ) : (
+                                        filteredConversations.map((conversation) => (
                                             <div
-                                                className={`max-w-[70%] px-4 py-2 rounded-2xl ${message.sender === 'me'
-                                                    ? 'bg-[#EC3558] text-white rounded-tr-sm'
-                                                    : 'bg-gray-100 text-gray-900 rounded-tl-sm'
-                                                    }`}
+                                                key={conversation.id}
+                                                className={`p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3 ${activeConversation?.id === conversation.id ? 'bg-gray-50' : ''} md:w-full w-auto md:mb-0 mb-0 flex-shrink-0`}
+                                                onClick={() => handleConversationChange(conversation.id)}
                                             >
-                                                {message.content}
-                                                <div className={`text-xs mt-1 ${message.sender === 'me' ? 'text-white/70' : 'text-gray-500'}`}>
-                                                    {message.time}
+                                                <div className="relative flex-shrink-0">
+                                                    <Avatar className="w-10 h-10">
+                                                        <AvatarImage src={conversation.otherUserAvatarUrl} alt={conversation.otherUserUsername} />
+                                                        <AvatarFallback>{conversation.otherUserUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                    {/* Badge de messages non lus */}
+                                                    {conversation.unreadCount > 0 && (
+                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#EC3558] text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                                                            {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0 hidden sm:block lg:block">
+                                                    <div className="font-medium text-gray-900">
+                                                        {conversation.otherUserUsername}
+                                                    </div>
+                                                    <p className="text-sm text-gray-500 truncate">
+                                                        {conversation.lastMessage?.content || 'Nouvelle conversation'}
+                                                    </p>
                                                 </div>
                                             </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Active conversation */}
+                            {activeConversation ? (
+                                <div className="col-span-12 md:col-span-8 bg-white rounded-xl border border-gray-200 flex flex-col">
+                                    <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+                                        <div className="flex items-center gap-3">
+                                            <div>
+                                                <Avatar className="w-10 h-10">
+                                                    <AvatarImage src={activeConversation.otherUserAvatarUrl} alt={activeConversation.otherUserUsername} />
+                                                    <AvatarFallback>{activeConversation.otherUserUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-gray-900">
+                                                    {activeConversation.otherUserUsername}
+                                                </div>
+                                                {isTyping && (
+                                                    <p className="text-xs text-[#EC3558] italic">En train d'écrire...</p>
+                                                )}
+                                            </div>
                                         </div>
-                                    ))
-                                )}
-                                {/* Élément invisible pour le scroll automatique */}
-                                <div ref={messagesEndRef} />
-                            </div>
-                            <div className="p-4 border-t border-gray-100 flex-shrink-0">
-                                <form className="flex items-center gap-2" onSubmit={handleSendMessage}>
-                                    <input
-                                        type="text"
-                                        placeholder="Écrire un message..."
-                                        className="flex-1 h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EC3558]"
-                                        value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="h-11 sm:px-5 px-3 bg-[#EC3558] text-white rounded-xl hover:bg-[#EC3558]/90 transition-colors flex items-center gap-2"
-                                    >
-                                        <Send className="w-4 h-4" />
-                                        <span className="sm:inline hidden">Envoyer</span>
-                                    </button>
-                                </form>
-                            </div>
+                                        {/* Bouton supprimer */}
+                                        <button
+                                            onClick={handleDeleteConversation}
+                                            className="p-2 hover:bg-red-50 rounded-full transition-colors group"
+                                            title="Supprimer la conversation"
+                                        >
+                                            <Trash2 className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-4 md:max-h-[calc(100vh-15rem)] max-h-[calc(100vh-22rem)]">
+                                        {loadingMessages ? (
+                                            <div className="flex items-center justify-center h-full">
+                                                <Loader2 className="w-6 h-6 animate-spin text-[#EC3558]" />
+                                            </div>
+                                        ) : activeMessages.length === 0 ? (
+                                            <div className="flex items-center justify-center h-full">
+                                                <div className="text-center text-gray-500">
+                                                    <p className="mb-2 font-medium">Aucun message</p>
+                                                    <p className="text-sm">Commencez la conversation</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            activeMessages.map((message) => {
+                                                const isMe = message.senderId === currentUserId;
+                                                return (
+                                                    <div key={message.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                        <div
+                                                            className={`max-w-[70%] px-4 py-2 rounded-2xl ${isMe
+                                                                ? 'bg-[#EC3558] text-white rounded-tr-sm'
+                                                                : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                                                                }`}
+                                                        >
+                                                            {message.content}
+                                                            <div className={`text-xs mt-1 flex items-center gap-1 ${isMe ? 'text-white/70' : 'text-gray-500'}`}>
+                                                                <span>{formatMessageTime(message.sentAt)}</span>
+                                                                {isMe && message.isRead && (
+                                                                    <span className="text-white/70">✓✓</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                        {/* Élément invisible pour le scroll automatique */}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                    <div className="p-4 border-t border-gray-100 flex-shrink-0">
+                                        <form className="flex items-center gap-2" onSubmit={handleSendMessage}>
+                                            <input
+                                                type="text"
+                                                placeholder="Écrire un message..."
+                                                className="flex-1 h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#EC3558]"
+                                                value={newMessage}
+                                                onChange={(e) => {
+                                                    setNewMessage(e.target.value);
+                                                    handleTyping();
+                                                }}
+                                                disabled={!isConnected}
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="h-11 sm:px-5 px-3 bg-[#EC3558] text-white rounded-xl hover:bg-[#EC3558]/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={!isConnected || !newMessage.trim()}
+                                            >
+                                                <Send className="w-4 h-4" />
+                                                <span className="sm:inline hidden">Envoyer</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="col-span-12 md:col-span-8 bg-white rounded-xl border border-gray-200 flex items-center justify-center">
+                                    <div className="text-center text-gray-500">
+                                        <p className="mb-2 font-medium">Sélectionnez une conversation</p>
+                                        <p className="text-sm">Choisissez une conversation pour commencer à discuter</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Right Sidebar */}
