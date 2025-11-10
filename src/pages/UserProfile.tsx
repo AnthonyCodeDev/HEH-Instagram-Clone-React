@@ -174,7 +174,7 @@ const UserProfile = () => {
             {/* Cover Photo */}
             <div className="relative h-48 rounded-2xl overflow-hidden mb-6">
               <img
-                src={state.user.avatarUrl || defaultBackground}
+                src={state.user.bannerUrl || defaultBackground}
                 alt="Cover"
                 className="w-full h-full object-cover"
               />
@@ -236,7 +236,7 @@ const UserProfile = () => {
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <h2 className="text-2xl font-bold text-gray-900">{state.user.username}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">{state.user.name}</h2>
                   </div>
                   <p className="text-gray-600 mb-4">@{state.user.username}</p>
                   <p className="text-gray-800 mb-4 leading-relaxed">{state.user.bio}</p>
@@ -279,7 +279,7 @@ const UserProfile = () => {
                           </a>
                         </Button>
                       )}
-                      {state.user.socialLinks.instagram && (
+                      {state.user.socialLinks.youtube && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -287,17 +287,31 @@ const UserProfile = () => {
                           asChild
                         >
                           <a
-                            href={state.user.socialLinks.instagram}
+                            href={state.user.socialLinks.youtube}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2"
                           >
                             <div className="w-4 h-4 flex items-center justify-center">
-                              <svg viewBox="0 0 24 24" width="16" height="15" fill="currentColor">
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                              <svg width="16" height="15" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="0.69565" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="white" />
+                                <g clipPath="url(#clip0_11_27)">
+                                  <g clipPath="url(#clip1_11_27)">
+                                    <path d="M19.3993 7.57574C19.2239 6.87383 18.709 6.32224 18.0539 6.13435C16.8676 5.79346 12.1087 5.79346 12.1087 5.79346C12.1087 5.79346 7.34982 5.79346 6.16354 6.13435C5.5084 6.32224 4.99355 6.87383 4.81818 7.57574C4.5 8.84669 4.5 11.5 4.5 11.5C4.5 11.5 4.5 14.1533 4.81818 15.4242C4.99355 16.1261 5.5084 16.6777 6.16354 16.8656C7.34982 17.2065 12.1087 17.2065 12.1087 17.2065C12.1087 17.2065 16.8676 17.2065 18.0539 16.8656C18.709 16.6777 19.2239 16.1261 19.3993 15.4242C19.7174 14.1533 19.7174 11.5 19.7174 11.5C19.7174 11.5 19.7162 8.84669 19.3993 7.57574Z" fill="#FF0000" />
+                                    <path d="M10.5855 13.9455L14.5389 11.5002L10.5855 9.05493V13.9455Z" fill="white" />
+                                  </g>
+                                </g>
+                                <defs>
+                                  <clipPath id="clip0_11_27">
+                                    <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
+                                  </clipPath>
+                                  <clipPath id="clip1_11_27">
+                                    <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
+                                  </clipPath>
+                                </defs>
                               </svg>
                             </div>
-                            <span className="text-xs">Instagram</span>
+                            <span className="text-xs">YouTube</span>
                           </a>
                         </Button>
                       )}

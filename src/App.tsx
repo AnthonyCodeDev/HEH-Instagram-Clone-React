@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import MobileNavbar from "@/components/MobileNavbar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
-import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";

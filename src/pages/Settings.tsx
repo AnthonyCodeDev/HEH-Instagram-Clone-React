@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import RightBar from '@/components/RightBar';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
+import { userService } from '@/services/userService';
 import {
     Dialog,
     DialogContent,
@@ -29,7 +30,9 @@ import {
 
 const Settings = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",
@@ -37,6 +40,22 @@ const Settings = () => {
         confirmPassword: ""
     });
     const [passwordError, setPasswordError] = useState("");
+    const [profileData, setProfileData] = useState({
+        name: "",
+        username: "",
+        email: "",
+        bio: "",
+        phone: "",
+        location: "",
+        birthdate: "",
+        avatar: "",
+        banner: "",
+        socialLinks: {
+            tiktok: "",
+            youtube: "",
+            twitter: ""
+        }
+    });
 
     // Fonction pour gérer le changement de mot de passe avec AJAX
     const handlePasswordChange = async () => {
@@ -59,30 +78,11 @@ const Settings = () => {
             // Afficher un indicateur de chargement
             setIsLoading(true);
 
-            // Préparer les données à envoyer
-            const dataToSend = {
+            // Utiliser le service pour changer le mot de passe
+            await userService.changePassword({
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword
-            };
-
-            // Faire la requête AJAX
-            const response = await fetch('https://localhost/api/users/change-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer fake-token-123456789'
-                },
-                body: JSON.stringify(dataToSend)
             });
-
-            // Vérifier la réponse
-            if (!response.ok) {
-                // Simuler une erreur d'authentification si le mot de passe actuel est incorrect
-                if (passwordData.currentPassword !== "password123") {
-                    throw new Error("Le mot de passe actuel est incorrect.");
-                }
-                throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
-            }
 
             // Réinitialiser les champs
             setPasswordData({
@@ -140,45 +140,16 @@ const Settings = () => {
                 // Afficher un indicateur de chargement
                 setIsLoading(true);
 
-                // Lire le fichier en base64
-                const reader = new FileReader();
+                // Utiliser le service pour uploader l'avatar
+                const result = await userService.uploadAvatar(file);
 
-                // Créer une promesse pour attendre que la lecture soit terminée
-                const base64Image = await new Promise<string>((resolve, reject) => {
-                    reader.onload = (event) => {
-                        if (event.target?.result) {
-                            resolve(event.target.result as string);
-                        } else {
-                            reject(new Error("Échec de la lecture du fichier"));
-                        }
-                    };
-                    reader.onerror = () => reject(reader.error);
-                    reader.readAsDataURL(file);
-                });
+                console.log('🖼️ AVATAR UPLOAD - Réponse du backend:', result);
 
-                // Préparer les données à envoyer
-                const formData = new FormData();
-                formData.append('avatar', file);
-
-                // Faire la requête AJAX
-                const response = await fetch('https://localhost/api/users/avatar', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer fake-token-123456789'
-                    },
-                    body: formData
-                });
-
-                // Vérifier la réponse
-                if (!response.ok) {
-                    throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
-                }
-
-                // Mettre à jour l'avatar dans le state
-                setProfileData({
-                    ...profileData,
-                    avatar: base64Image
-                });
+                // Mettre à jour l'avatar dans le state avec l'URL retournée par le backend
+                setProfileData(prev => ({
+                    ...prev,
+                    avatar: result.avatarUrl
+                }));
 
                 // Afficher un toast de succès
                 toast({
@@ -203,34 +174,167 @@ const Settings = () => {
         }
     };
 
+    // Fonction pour gérer le changement de photo de couverture (bannière)
+    const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+
+            // Vérifier le type de fichier
+            if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+                toast({
+                    title: "Format non supporté",
+                    description: "Veuillez sélectionner une image au format JPEG ou PNG.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            // Vérifier la taille du fichier (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast({
+                    title: "Fichier trop volumineux",
+                    description: "La taille de l'image ne doit pas dépasser 5MB.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            try {
+                // Afficher un indicateur de chargement
+                setIsLoading(true);
+
+                // Utiliser le service pour uploader la bannière
+                const result = await userService.uploadBanner(file);
+
+                console.log('🎨 BANNER UPLOAD - Réponse du backend:', result);
+
+                // Mettre à jour la bannière dans le state avec l'URL retournée par le backend
+                setProfileData(prev => ({
+                    ...prev,
+                    banner: result.bannerUrl
+                }));
+
+                // Afficher un toast de succès
+                toast({
+                    title: "Photo de couverture mise à jour",
+                    description: "Votre photo de couverture a été changée avec succès.",
+                    variant: "default",
+                });
+
+            } catch (error) {
+                console.error('Erreur lors du changement de photo de couverture:', error);
+
+                // Afficher un toast d'erreur
+                toast({
+                    title: "Erreur",
+                    description: error instanceof Error ? error.message : "Une erreur est survenue lors du changement de photo de couverture.",
+                    variant: "destructive",
+                });
+            } finally {
+                // Désactiver l'indicateur de chargement
+                setIsLoading(false);
+            }
+        }
+    };
+
+    // Fonction pour valider les liens des réseaux sociaux
+    const validateSocialLinks = () => {
+        const errors: string[] = [];
+
+        // Validation TikTok (UNIQUEMENT des liens complets)
+        if (profileData.socialLinks.tiktok && profileData.socialLinks.tiktok.trim()) {
+            const tiktokPattern = /^https?:\/\/(www\.)?tiktok\.com\/@[\w.-]+\/?$/;
+            if (!tiktokPattern.test(profileData.socialLinks.tiktok.trim())) {
+                errors.push("TikTok : Le lien doit être au format 'https://tiktok.com/@username'");
+            }
+        }
+
+        // Validation YouTube (UNIQUEMENT des liens complets)
+        if (profileData.socialLinks.youtube && profileData.socialLinks.youtube.trim()) {
+            const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com\/(c\/|@|channel\/|user\/)?[\w.-]+|youtu\.be\/[\w-]+)\/?$/;
+            if (!youtubePattern.test(profileData.socialLinks.youtube.trim())) {
+                errors.push("YouTube : Le lien doit être au format 'https://youtube.com/@channel' ou 'https://youtu.be/...'");
+            }
+        }
+
+        // Validation Twitter/X (UNIQUEMENT des liens complets)
+        if (profileData.socialLinks.twitter && profileData.socialLinks.twitter.trim()) {
+            const twitterPattern = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[\w]+\/?$/;
+            if (!twitterPattern.test(profileData.socialLinks.twitter.trim())) {
+                errors.push("Twitter : Le lien doit être au format 'https://twitter.com/username' ou 'https://x.com/username'");
+            }
+        }
+
+        return errors;
+    };
+
     // Fonction pour envoyer les données à l'API
     const handleSaveProfile = async () => {
         setIsLoading(true);
 
         try {
+            // Valider les liens des réseaux sociaux
+            const validationErrors = validateSocialLinks();
+            if (validationErrors.length > 0) {
+                toast({
+                    title: "Erreur de validation",
+                    description: validationErrors.join(" • "),
+                    variant: "destructive",
+                });
+                setIsLoading(false);
+                return;
+            }
+            
             // Préparation des données à envoyer
-            const dataToSend = {
-                ...profileData,
-                updatedAt: new Date().toISOString()
+            const dataToSend: any = {
+                username: profileData.username,
+                email: profileData.email,
+                bio: profileData.bio || undefined,
+                name: profileData.name || undefined,
+                phone: profileData.phone || undefined,
+                location: profileData.location || undefined,
+                birthdate: profileData.birthdate || undefined,
+                socialLinks: {
+                    tiktok: profileData.socialLinks.tiktok || undefined,
+                    youtube: profileData.socialLinks.youtube || undefined,
+                    twitter: profileData.socialLinks.twitter || undefined
+                }
             };
 
-            // Envoi des données à l'API
-            const response = await fetch('https://localhost/api/users/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer fake-token-123456789'
-                },
-                body: JSON.stringify(dataToSend)
-            });
+            // Utiliser le service pour mettre à jour le profil
+            const result = await userService.updateUser(dataToSend);
 
-            // Vérification de la réponse
-            if (!response.ok) {
-                throw new Error(`Erreur ${response.status}: ${response.statusText || 'La requête a échoué'}`);
+            // Vérifier si le username a changé
+            const oldUsername = localStorage.getItem('username');
+            const newUsername = result.username || profileData.username;
+            
+            if (oldUsername !== newUsername) {
+                // Mettre à jour le username dans localStorage
+                localStorage.setItem('username', newUsername);
+                
+                // Afficher un toast spécifique pour le changement de username
+                toast({
+                    title: "Profil mis à jour",
+                    description: "Votre nom d'utilisateur a été modifié. Redirection en cours...",
+                    variant: "default",
+                });
+                
+                // Rediriger vers le nouveau profil après 1.5 secondes
+                setTimeout(() => {
+                    window.location.href = `/u/${newUsername}`;
+                }, 1500);
+                
+                return; // Sortir de la fonction pour éviter le toast normal
             }
 
-            // Traitement de la réponse
-            const result = await response.json();
+            // Mettre à jour le state local avec les données retournées (y compris avatarUrl et bannerUrl)
+            if (result.avatarUrl || result.bannerUrl) {
+                setProfileData(prev => ({
+                    ...prev,
+                    ...(result.avatarUrl && { avatar: result.avatarUrl }),
+                    ...(result.bannerUrl && { banner: result.bannerUrl })
+                }));
+            }
 
             // Afficher un toast de succès
             toast({
@@ -254,21 +358,45 @@ const Settings = () => {
         }
     };
 
-    const [profileData, setProfileData] = useState({
-        name: "Lucas Hergz",
-        username: "lucashergz20",
-        email: "lucas.hergz@email.com",
-        bio: "Des petits postes tous les jours, n'hésitez pas !",
-        phone: "+33 6 12 34 56 78",
-        location: "Paris, France",
-        birthdate: "1995-03-15",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
-        socialLinks: {
-            tiktok: "@lucashergz20",
-            youtube: "Lucas Hergz",
-            twitter: "@lucashergz20"
-        }
-    });
+    // Charger les données utilisateur au montage du composant
+    useEffect(() => {
+        const loadUserData = async () => {
+            setIsInitialLoading(true);
+            try {
+                const userData = await userService.getCurrentUser();
+                console.log('📊 CHARGEMENT INITIAL - Données utilisateur:', userData);
+                if (userData) {
+                    setProfileData({
+                        name: userData.name || "",
+                        username: userData.username || "",
+                        email: userData.email || "",
+                        bio: userData.bio || "",
+                        phone: userData.phone || "",
+                        location: userData.location || "",
+                        birthdate: userData.birthdate || "",
+                        avatar: userData.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+                        banner: userData.bannerUrl || "",
+                        socialLinks: {
+                            tiktok: userData.socialLinks?.tiktok || "",
+                            youtube: userData.socialLinks?.youtube || "",
+                            twitter: userData.socialLinks?.twitter || ""
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement du profil:', error);
+                toast({
+                    title: "Erreur",
+                    description: "Impossible de charger vos informations de profil.",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsInitialLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, []);
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -304,7 +432,55 @@ const Settings = () => {
                             </Button>
                         </div>
                     </div>
+
+                    {/* Loading state */}
+                    {isInitialLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Loader2 className="w-8 h-8 animate-spin text-stragram-primary" />
+                        </div>
+                    ) : (
                     <div>
+
+                        {/* Banner Section */}
+                        <div className="bg-white rounded-2xl shadow-sm mb-6 overflow-hidden">
+                            <div className="relative h-48 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500">
+                                {profileData.banner && (
+                                    <img 
+                                        src={profileData.banner} 
+                                        alt="Bannière de profil" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                                    <input
+                                        type="file"
+                                        ref={bannerInputRef}
+                                        accept="image/png,image/jpeg,image/jpg"
+                                        className="hidden"
+                                        onChange={handleBannerChange}
+                                    />
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        className="bg-white/90 hover:bg-white text-gray-900 flex items-center gap-2"
+                                        onClick={() => bannerInputRef.current?.click()}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Chargement...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Camera className="w-4 h-4" />
+                                                Changer la photo de couverture
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Account Information */}
                         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
@@ -443,7 +619,7 @@ const Settings = () => {
                                                 </svg>
                                             </div>
                                             <Input
-                                                placeholder="TikTok"
+                                                placeholder="https://tiktok.com/@username"
                                                 value={profileData.socialLinks.tiktok}
                                                 onChange={(e) => setProfileData({
                                                     ...profileData,
@@ -472,7 +648,7 @@ const Settings = () => {
                                                 </svg>
                                             </div>
                                             <Input
-                                                placeholder="YouTube"
+                                                placeholder="https://youtube.com/@channel"
                                                 value={profileData.socialLinks.youtube}
                                                 onChange={(e) => setProfileData({
                                                     ...profileData,
@@ -488,7 +664,7 @@ const Settings = () => {
                                                 </svg>
                                             </div>
                                             <Input
-                                                placeholder="Twitter"
+                                                placeholder="https://twitter.com/username"
                                                 value={profileData.socialLinks.twitter}
                                                 onChange={(e) => setProfileData({
                                                     ...profileData,
@@ -611,6 +787,7 @@ const Settings = () => {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* Right Sidebar */}
