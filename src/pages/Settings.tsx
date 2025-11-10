@@ -284,7 +284,7 @@ const Settings = () => {
                 setIsLoading(false);
                 return;
             }
-            
+
             // Préparation des données à envoyer
             const dataToSend: any = {
                 username: profileData.username,
@@ -307,23 +307,23 @@ const Settings = () => {
             // Vérifier si le username a changé
             const oldUsername = localStorage.getItem('username');
             const newUsername = result.username || profileData.username;
-            
+
             if (oldUsername !== newUsername) {
                 // Mettre à jour le username dans localStorage
                 localStorage.setItem('username', newUsername);
-                
+
                 // Afficher un toast spécifique pour le changement de username
                 toast({
                     title: "Profil mis à jour",
                     description: "Votre nom d'utilisateur a été modifié. Redirection en cours...",
                     variant: "default",
                 });
-                
+
                 // Rediriger vers le nouveau profil après 1.5 secondes
                 setTimeout(() => {
                     window.location.href = `/u/${newUsername}`;
                 }, 1500);
-                
+
                 return; // Sortir de la fonction pour éviter le toast normal
             }
 
@@ -374,7 +374,7 @@ const Settings = () => {
                         phone: userData.phone || "",
                         location: userData.location || "",
                         birthdate: userData.birthdate || "",
-                        avatar: userData.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+                        avatar: userData.avatarUrl || "",
                         banner: userData.bannerUrl || "",
                         socialLinks: {
                             tiktok: userData.socialLinks?.tiktok || "",
@@ -439,354 +439,354 @@ const Settings = () => {
                             <Loader2 className="w-8 h-8 animate-spin text-stragram-primary" />
                         </div>
                     ) : (
-                    <div>
+                        <div>
 
-                        {/* Banner Section */}
-                        <div className="bg-white rounded-2xl shadow-sm mb-6 overflow-hidden">
-                            <div className="relative h-48 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500">
-                                {profileData.banner && (
-                                    <img 
-                                        src={profileData.banner} 
-                                        alt="Bannière de profil" 
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                                    <input
-                                        type="file"
-                                        ref={bannerInputRef}
-                                        accept="image/png,image/jpeg,image/jpg"
-                                        className="hidden"
-                                        onChange={handleBannerChange}
-                                    />
-                                    <Button
-                                        variant="default"
-                                        size="sm"
-                                        className="bg-white/90 hover:bg-white text-gray-900 flex items-center gap-2"
-                                        onClick={() => bannerInputRef.current?.click()}
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Chargement...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Camera className="w-4 h-4" />
-                                                Changer la photo de couverture
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Account Information */}
-                        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-                            <div className="flex items-center gap-6 mb-6">
-                                <Avatar className="w-20 h-20">
-                                    <AvatarImage src={profileData.avatar} alt={profileData.name} />
-                                    <AvatarFallback className="bg-stragram-primary text-white text-xl">
-                                        {profileData.name.split(' ').map(n => n[0]).join('')}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h2 className="text-xl font-semibold text-gray-900 mb-1">{profileData.name}</h2>
-                                    <p className="text-gray-600">@{profileData.username}</p>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        accept="image/png,image/jpeg,image/jpg"
-                                        className="hidden"
-                                        onChange={handlePhotoChange}
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="mt-2 flex items-center gap-2"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Chargement...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Camera className="w-4 h-4" />
-                                                Changer la photo
-                                            </>
-                                        )}
-                                    </Button>
+                            {/* Banner Section */}
+                            <div className="bg-white rounded-2xl shadow-sm mb-6 overflow-hidden">
+                                <div className="relative h-48 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500">
+                                    {profileData.banner && (
+                                        <img
+                                            src={profileData.banner}
+                                            alt="Bannière de profil"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                                        <input
+                                            type="file"
+                                            ref={bannerInputRef}
+                                            accept="image/png,image/jpeg,image/jpg"
+                                            className="hidden"
+                                            onChange={handleBannerChange}
+                                        />
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            className="bg-white/90 hover:bg-white text-gray-900 flex items-center gap-2"
+                                            onClick={() => bannerInputRef.current?.click()}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Chargement...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Camera className="w-4 h-4" />
+                                                    Changer la photo de couverture
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Nom complet</Label>
-                                        <Input
-                                            id="name"
-                                            value={profileData.name}
-                                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                            {/* Account Information */}
+                            <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                                <div className="flex items-center gap-6 mb-6">
+                                    <Avatar className="w-20 h-20">
+                                        <AvatarImage src={profileData.avatar} alt={profileData.name} />
+                                        <AvatarFallback className="flex h-full w-full items-center justify-center rounded-full text-muted-foreground bg-muted text-2xl">
+                                            {profileData.username.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-gray-900 mb-1">{profileData.name}</h2>
+                                        <p className="text-gray-600">@{profileData.username}</p>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            accept="image/png,image/jpeg,image/jpg"
+                                            className="hidden"
+                                            onChange={handlePhotoChange}
                                         />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="username">Nom d'utilisateur</Label>
-                                        <Input
-                                            id="username"
-                                            value={profileData.username}
-                                            onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="bio">Biographie</Label>
-                                    <Input
-                                        id="bio"
-                                        value={profileData.bio}
-                                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                value={profileData.email}
-                                                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                                className="pl-10"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="phone">Téléphone</Label>
-                                        <Input
-                                            id="phone"
-                                            value={profileData.phone}
-                                            onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="location">Localisation</Label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                            <Input
-                                                id="location"
-                                                value={profileData.location}
-                                                onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-                                                className="pl-10"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="birthdate">Date de naissance</Label>
-                                        <div className="relative">
-                                            <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                            <Input
-                                                id="birthdate"
-                                                type="date"
-                                                value={profileData.birthdate}
-                                                onChange={(e) => setProfileData({ ...profileData, birthdate: e.target.value })}
-                                                className="pl-10"
-                                            />
-                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-2 flex items-center gap-2"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Chargement...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Camera className="w-4 h-4" />
+                                                    Changer la photo
+                                                </>
+                                            )}
+                                        </Button>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <Label>Réseaux sociaux</Label>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 flex items-center justify-center">
-                                                <svg width="20" height="20" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <rect x="0.217407" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
-                                                    <path d="M10.296 10.0573V9.51623C10.1157 9.47115 9.93534 9.47119 9.75499 9.47119C7.45547 9.47119 5.60684 11.3198 5.60684 13.6193C5.60684 15.017 6.32826 16.2795 7.36529 17.0009L7.32021 16.9558C6.64388 16.2344 6.28317 15.2425 6.28317 14.2055C6.28317 11.906 8.08671 10.1024 10.296 10.0573Z" fill="#25F4EE" />
-                                                    <path d="M10.3792 16.1046C11.4162 16.1046 12.2278 15.293 12.2729 14.256V5.23825H13.8961C13.851 5.0579 13.851 4.87754 13.851 4.6521H11.5966V13.6698C11.5515 14.6618 10.7399 15.4733 9.70286 15.4733C9.38724 15.4733 9.07162 15.3832 8.84618 15.2479C9.20688 15.7439 9.74795 16.1046 10.3792 16.1046ZM17.0071 8.30427V7.76321C16.3759 7.76321 15.7897 7.58285 15.2937 7.26723C15.7446 7.76321 16.3308 8.16901 17.0071 8.30427Z" fill="#25F4EE" />
-                                                    <path d="M15.2952 7.26206C14.7992 6.721 14.5287 5.99958 14.5287 5.18799H13.8974C14.0778 6.08976 14.6188 6.81118 15.2952 7.26206ZM9.74933 11.6807C8.7123 11.6807 7.85561 12.5374 7.85561 13.5744C7.85561 14.2958 8.3065 14.9271 8.89265 15.2427C8.66721 14.9271 8.53194 14.5664 8.53194 14.1606C8.53194 13.1235 9.38862 12.2668 10.4257 12.2668C10.606 12.2668 10.7864 12.3119 10.9667 12.357V10.0575C10.7864 10.0124 10.606 10.0124 10.4257 10.0124H10.3355V11.7258C10.11 11.7258 9.92969 11.6807 9.74933 11.6807Z" fill="#FE2C55" />
-                                                    <path d="M17.0227 8.29297V10.0063C15.8504 10.0063 14.7683 9.64562 13.9116 9.01439V13.6134C13.9116 15.9129 12.063 17.7616 9.76348 17.7616C8.86171 17.7616 8.05011 17.491 7.37379 17.0401C8.14029 17.8517 9.22242 18.3477 10.3947 18.3477C12.6942 18.3477 14.5429 16.4991 14.5429 14.1996V9.60054C15.4446 10.2318 16.5268 10.5925 17.654 10.5925V8.33806C17.4736 8.33806 17.2482 8.33806 17.0227 8.29297Z" fill="#FE2C55" />
-                                                    <path d="M13.9144 13.6195V9.02051C14.8161 9.6518 15.8983 10.0125 17.0255 10.0125V8.25401C16.3491 8.11874 15.763 7.75803 15.3121 7.26206C14.5907 6.81118 14.0947 6.04467 13.9595 5.18799H12.2912V14.2057C12.2461 15.1977 11.4345 16.0093 10.3975 16.0093C9.76622 16.0093 9.22516 15.6936 8.86445 15.2427C8.2783 14.9722 7.8725 14.341 7.8725 13.6195C7.8725 12.5825 8.72918 11.7259 9.76622 11.7259C9.94657 11.7259 10.1269 11.7709 10.3073 11.816V10.0575C8.05285 10.1026 6.24931 11.9513 6.24931 14.2057C6.24931 15.2879 6.65511 16.2798 7.37653 17.0463C8.05285 17.4972 8.86445 17.8128 9.76622 17.8128C12.0657 17.7677 13.9144 15.874 13.9144 13.6195Z" fill="white" />
-                                                </svg>
-                                            </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name">Nom complet</Label>
                                             <Input
-                                                placeholder="https://tiktok.com/@username"
-                                                value={profileData.socialLinks.tiktok}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData,
-                                                    socialLinks: { ...profileData.socialLinks, tiktok: e.target.value }
-                                                })}
+                                                id="name"
+                                                value={profileData.name}
+                                                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                                             />
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 flex items-center justify-center">
-                                                <svg width="20" height="20" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <rect x="0.69565" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="white" />
-                                                    <g clipPath="url(#clip0_11_27)">
-                                                        <g clipPath="url(#clip1_11_27)">
-                                                            <path d="M19.3993 7.57574C19.2239 6.87383 18.709 6.32224 18.0539 6.13435C16.8676 5.79346 12.1087 5.79346 12.1087 5.79346C12.1087 5.79346 7.34982 5.79346 6.16354 6.13435C5.5084 6.32224 4.99355 6.87383 4.81818 7.57574C4.5 8.84669 4.5 11.5 4.5 11.5C4.5 11.5 4.5 14.1533 4.81818 15.4242C4.99355 16.1261 5.5084 16.6777 6.16354 16.8656C7.34982 17.2065 12.1087 17.2065 12.1087 17.2065C12.1087 17.2065 16.8676 17.2065 18.0539 16.8656C18.709 16.6777 19.2239 16.1261 19.3993 15.4242C19.7174 14.1533 19.7174 11.5 19.7174 11.5C19.7174 11.5 19.7162 8.84669 19.3993 7.57574Z" fill="#FF0000" />
-                                                            <path d="M10.5855 13.9455L14.5389 11.5002L10.5855 9.05493V13.9455Z" fill="white" />
-                                                        </g>
-                                                    </g>
-                                                    <defs>
-                                                        <clipPath id="clip0_11_27">
-                                                            <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
-                                                        </clipPath>
-                                                        <clipPath id="clip1_11_27">
-                                                            <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
-                                                        </clipPath>
-                                                    </defs>
-                                                </svg>
-                                            </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="username">Nom d'utilisateur</Label>
                                             <Input
-                                                placeholder="https://youtube.com/@channel"
-                                                value={profileData.socialLinks.youtube}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData,
-                                                    socialLinks: { ...profileData.socialLinks, youtube: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 flex items-center justify-center">
-                                                <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <rect x="0.17392" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
-                                                    <path d="M14.6768 6.17383H16.3096L12.7246 10.6941L16.9131 16.826H13.6262L11.0528 13.0997L8.10664 16.826H6.47385L10.2719 11.9913L6.26088 6.17383H9.62939L11.9543 9.57781L14.6768 6.17383ZM14.1054 15.7647H15.0105L9.15376 7.19581H8.18118L14.1054 15.7647Z" fill="white" />
-                                                </svg>
-                                            </div>
-                                            <Input
-                                                placeholder="https://twitter.com/username"
-                                                value={profileData.socialLinks.twitter}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData,
-                                                    socialLinks: { ...profileData.socialLinks, twitter: e.target.value }
-                                                })}
+                                                id="username"
+                                                value={profileData.username}
+                                                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
                                             />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                    <Button
-                                        className="flex-1"
-                                        onClick={handleSaveProfile}
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Sauvegarde en cours...
-                                            </>
-                                        ) : (
-                                            "Sauvegarder les modifications"
-                                        )}
-                                    </Button>
-                                    <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                className="flex items-center gap-2 justify-center"
-                                                disabled={isLoading}
-                                            >
-                                                <Lock className="w-4 h-4" />
-                                                Changer le mot de passe
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[425px] w-[calc(100vw-2rem)] mx-auto">
-                                            <DialogHeader>
-                                                <DialogTitle>Changer le mot de passe</DialogTitle>
-                                                <DialogDescription>
-                                                    Entrez votre mot de passe actuel et votre nouveau mot de passe.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <div className="grid gap-4 py-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="current-password">Mot de passe actuel</Label>
-                                                    <Input
-                                                        id="current-password"
-                                                        type="password"
-                                                        value={passwordData.currentPassword}
-                                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="new-password">Nouveau mot de passe</Label>
-                                                    <Input
-                                                        id="new-password"
-                                                        type="password"
-                                                        value={passwordData.newPassword}
-                                                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-                                                    <Input
-                                                        id="confirm-password"
-                                                        type="password"
-                                                        value={passwordData.confirmPassword}
-                                                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                                    />
-                                                </div>
-                                                {passwordError && (
-                                                    <div className="text-red-500 text-sm">{passwordError}</div>
-                                                )}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bio">Biographie</Label>
+                                        <Input
+                                            id="bio"
+                                            value={profileData.bio}
+                                            onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email">Email</Label>
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    value={profileData.email}
+                                                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                                    className="pl-10"
+                                                />
                                             </div>
-                                            <DialogFooter>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone">Téléphone</Label>
+                                            <Input
+                                                id="phone"
+                                                value={profileData.phone}
+                                                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="location">Localisation</Label>
+                                            <div className="relative">
+                                                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                                <Input
+                                                    id="location"
+                                                    value={profileData.location}
+                                                    onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="birthdate">Date de naissance</Label>
+                                            <div className="relative">
+                                                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                                <Input
+                                                    id="birthdate"
+                                                    type="date"
+                                                    value={profileData.birthdate}
+                                                    onChange={(e) => setProfileData({ ...profileData, birthdate: e.target.value })}
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <Label>Réseaux sociaux</Label>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 flex items-center justify-center">
+                                                    <svg width="20" height="20" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <rect x="0.217407" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
+                                                        <path d="M10.296 10.0573V9.51623C10.1157 9.47115 9.93534 9.47119 9.75499 9.47119C7.45547 9.47119 5.60684 11.3198 5.60684 13.6193C5.60684 15.017 6.32826 16.2795 7.36529 17.0009L7.32021 16.9558C6.64388 16.2344 6.28317 15.2425 6.28317 14.2055C6.28317 11.906 8.08671 10.1024 10.296 10.0573Z" fill="#25F4EE" />
+                                                        <path d="M10.3792 16.1046C11.4162 16.1046 12.2278 15.293 12.2729 14.256V5.23825H13.8961C13.851 5.0579 13.851 4.87754 13.851 4.6521H11.5966V13.6698C11.5515 14.6618 10.7399 15.4733 9.70286 15.4733C9.38724 15.4733 9.07162 15.3832 8.84618 15.2479C9.20688 15.7439 9.74795 16.1046 10.3792 16.1046ZM17.0071 8.30427V7.76321C16.3759 7.76321 15.7897 7.58285 15.2937 7.26723C15.7446 7.76321 16.3308 8.16901 17.0071 8.30427Z" fill="#25F4EE" />
+                                                        <path d="M15.2952 7.26206C14.7992 6.721 14.5287 5.99958 14.5287 5.18799H13.8974C14.0778 6.08976 14.6188 6.81118 15.2952 7.26206ZM9.74933 11.6807C8.7123 11.6807 7.85561 12.5374 7.85561 13.5744C7.85561 14.2958 8.3065 14.9271 8.89265 15.2427C8.66721 14.9271 8.53194 14.5664 8.53194 14.1606C8.53194 13.1235 9.38862 12.2668 10.4257 12.2668C10.606 12.2668 10.7864 12.3119 10.9667 12.357V10.0575C10.7864 10.0124 10.606 10.0124 10.4257 10.0124H10.3355V11.7258C10.11 11.7258 9.92969 11.6807 9.74933 11.6807Z" fill="#FE2C55" />
+                                                        <path d="M17.0227 8.29297V10.0063C15.8504 10.0063 14.7683 9.64562 13.9116 9.01439V13.6134C13.9116 15.9129 12.063 17.7616 9.76348 17.7616C8.86171 17.7616 8.05011 17.491 7.37379 17.0401C8.14029 17.8517 9.22242 18.3477 10.3947 18.3477C12.6942 18.3477 14.5429 16.4991 14.5429 14.1996V9.60054C15.4446 10.2318 16.5268 10.5925 17.654 10.5925V8.33806C17.4736 8.33806 17.2482 8.33806 17.0227 8.29297Z" fill="#FE2C55" />
+                                                        <path d="M13.9144 13.6195V9.02051C14.8161 9.6518 15.8983 10.0125 17.0255 10.0125V8.25401C16.3491 8.11874 15.763 7.75803 15.3121 7.26206C14.5907 6.81118 14.0947 6.04467 13.9595 5.18799H12.2912V14.2057C12.2461 15.1977 11.4345 16.0093 10.3975 16.0093C9.76622 16.0093 9.22516 15.6936 8.86445 15.2427C8.2783 14.9722 7.8725 14.341 7.8725 13.6195C7.8725 12.5825 8.72918 11.7259 9.76622 11.7259C9.94657 11.7259 10.1269 11.7709 10.3073 11.816V10.0575C8.05285 10.1026 6.24931 11.9513 6.24931 14.2057C6.24931 15.2879 6.65511 16.2798 7.37653 17.0463C8.05285 17.4972 8.86445 17.8128 9.76622 17.8128C12.0657 17.7677 13.9144 15.874 13.9144 13.6195Z" fill="white" />
+                                                    </svg>
+                                                </div>
+                                                <Input
+                                                    placeholder="https://tiktok.com/@username"
+                                                    value={profileData.socialLinks.tiktok}
+                                                    onChange={(e) => setProfileData({
+                                                        ...profileData,
+                                                        socialLinks: { ...profileData.socialLinks, tiktok: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 flex items-center justify-center">
+                                                    <svg width="20" height="20" viewBox="0 0 24 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <rect x="0.69565" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="white" />
+                                                        <g clipPath="url(#clip0_11_27)">
+                                                            <g clipPath="url(#clip1_11_27)">
+                                                                <path d="M19.3993 7.57574C19.2239 6.87383 18.709 6.32224 18.0539 6.13435C16.8676 5.79346 12.1087 5.79346 12.1087 5.79346C12.1087 5.79346 7.34982 5.79346 6.16354 6.13435C5.5084 6.32224 4.99355 6.87383 4.81818 7.57574C4.5 8.84669 4.5 11.5 4.5 11.5C4.5 11.5 4.5 14.1533 4.81818 15.4242C4.99355 16.1261 5.5084 16.6777 6.16354 16.8656C7.34982 17.2065 12.1087 17.2065 12.1087 17.2065C12.1087 17.2065 16.8676 17.2065 18.0539 16.8656C18.709 16.6777 19.2239 16.1261 19.3993 15.4242C19.7174 14.1533 19.7174 11.5 19.7174 11.5C19.7174 11.5 19.7162 8.84669 19.3993 7.57574Z" fill="#FF0000" />
+                                                                <path d="M10.5855 13.9455L14.5389 11.5002L10.5855 9.05493V13.9455Z" fill="white" />
+                                                            </g>
+                                                        </g>
+                                                        <defs>
+                                                            <clipPath id="clip0_11_27">
+                                                                <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
+                                                            </clipPath>
+                                                            <clipPath id="clip1_11_27">
+                                                                <rect width="15.2174" height="11.413" fill="white" transform="translate(4.5 5.79346)" />
+                                                            </clipPath>
+                                                        </defs>
+                                                    </svg>
+                                                </div>
+                                                <Input
+                                                    placeholder="https://youtube.com/@channel"
+                                                    value={profileData.socialLinks.youtube}
+                                                    onChange={(e) => setProfileData({
+                                                        ...profileData,
+                                                        socialLinks: { ...profileData.socialLinks, youtube: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 flex items-center justify-center">
+                                                    <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <rect x="0.17392" y="0.0869141" width="22.8261" height="22.8261" rx="11.413" fill="black" />
+                                                        <path d="M14.6768 6.17383H16.3096L12.7246 10.6941L16.9131 16.826H13.6262L11.0528 13.0997L8.10664 16.826H6.47385L10.2719 11.9913L6.26088 6.17383H9.62939L11.9543 9.57781L14.6768 6.17383ZM14.1054 15.7647H15.0105L9.15376 7.19581H8.18118L14.1054 15.7647Z" fill="white" />
+                                                    </svg>
+                                                </div>
+                                                <Input
+                                                    placeholder="https://twitter.com/username"
+                                                    value={profileData.socialLinks.twitter}
+                                                    onChange={(e) => setProfileData({
+                                                        ...profileData,
+                                                        socialLinks: { ...profileData.socialLinks, twitter: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                                        <Button
+                                            className="flex-1"
+                                            onClick={handleSaveProfile}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Sauvegarde en cours...
+                                                </>
+                                            ) : (
+                                                "Sauvegarder les modifications"
+                                            )}
+                                        </Button>
+                                        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                                            <DialogTrigger asChild>
                                                 <Button
                                                     variant="outline"
-                                                    onClick={() => setIsPasswordDialogOpen(false)}
+                                                    className="flex items-center gap-2 justify-center"
                                                     disabled={isLoading}
                                                 >
-                                                    Annuler
+                                                    <Lock className="w-4 h-4" />
+                                                    Changer le mot de passe
                                                 </Button>
-                                                <Button
-                                                    onClick={handlePasswordChange}
-                                                    disabled={isLoading}
-                                                >
-                                                    {isLoading ? (
-                                                        <>
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            Traitement...
-                                                        </>
-                                                    ) : (
-                                                        "Confirmer"
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-[425px] w-[calc(100vw-2rem)] mx-auto">
+                                                <DialogHeader>
+                                                    <DialogTitle>Changer le mot de passe</DialogTitle>
+                                                    <DialogDescription>
+                                                        Entrez votre mot de passe actuel et votre nouveau mot de passe.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-4 py-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="current-password">Mot de passe actuel</Label>
+                                                        <Input
+                                                            id="current-password"
+                                                            type="password"
+                                                            value={passwordData.currentPassword}
+                                                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                                                        <Input
+                                                            id="new-password"
+                                                            type="password"
+                                                            value={passwordData.newPassword}
+                                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+                                                        <Input
+                                                            id="confirm-password"
+                                                            type="password"
+                                                            value={passwordData.confirmPassword}
+                                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    {passwordError && (
+                                                        <div className="text-red-500 text-sm">{passwordError}</div>
                                                     )}
-                                                </Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
-                                </div>
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setIsPasswordDialogOpen(false)}
+                                                        disabled={isLoading}
+                                                    >
+                                                        Annuler
+                                                    </Button>
+                                                    <Button
+                                                        onClick={handlePasswordChange}
+                                                        disabled={isLoading}
+                                                    >
+                                                        {isLoading ? (
+                                                            <>
+                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                Traitement...
+                                                            </>
+                                                        ) : (
+                                                            "Confirmer"
+                                                        )}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
 
-                                {/* Bouton de déconnexion visible uniquement sur mobile */}
-                                <div className="mt-8 sm:hidden">
-                                    <Link to="/logout">
-                                        <Button variant="destructive" className="w-full flex items-center justify-center gap-2">
-                                            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-                                                <g clipPath="url(#clip0_2_194)">
-                                                    <path d="M16 31.5C7.4375 31.5 0.5 24.5625 0.5 16C0.5 7.4375 7.4375 0.5 16 0.5C24.5625 0.5 31.5 7.4375 31.5 16C31.5 24.5625 24.5625 31.5 16 31.5ZM17.8062 22.525L13.0875 18H24.5C25.3312 18 26 17.3312 26 16.5V15.5C26 14.6687 25.3312 14 24.5 14H13.0875L17.8062 9.475C18.4125 8.89375 18.425 7.925 17.8312 7.33125L17.1437 6.65C16.5562 6.0625 15.6062 6.0625 15.025 6.65L6.73125 14.9375C6.14375 15.525 6.14375 16.475 6.73125 17.0562L15.025 25.35C15.6125 25.9375 16.5625 25.9375 17.1437 25.35L17.8312 24.6688C18.425 24.075 18.4125 23.1062 17.8062 22.525Z" fill="white" />
-                                                </g>
-                                                <defs>
-                                                    <clipPath id="clip0_2_194">
-                                                        <rect width="32" height="32" fill="white" />
-                                                    </clipPath>
-                                                </defs>
-                                            </svg>
-                                            Déconnexion
-                                        </Button>
-                                    </Link>
+                                    {/* Bouton de déconnexion visible uniquement sur mobile */}
+                                    <div className="mt-8 sm:hidden">
+                                        <Link to="/logout">
+                                            <Button variant="destructive" className="w-full flex items-center justify-center gap-2">
+                                                <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
+                                                    <g clipPath="url(#clip0_2_194)">
+                                                        <path d="M16 31.5C7.4375 31.5 0.5 24.5625 0.5 16C0.5 7.4375 7.4375 0.5 16 0.5C24.5625 0.5 31.5 7.4375 31.5 16C31.5 24.5625 24.5625 31.5 16 31.5ZM17.8062 22.525L13.0875 18H24.5C25.3312 18 26 17.3312 26 16.5V15.5C26 14.6687 25.3312 14 24.5 14H13.0875L17.8062 9.475C18.4125 8.89375 18.425 7.925 17.8312 7.33125L17.1437 6.65C16.5562 6.0625 15.6062 6.0625 15.025 6.65L6.73125 14.9375C6.14375 15.525 6.14375 16.475 6.73125 17.0562L15.025 25.35C15.6125 25.9375 16.5625 25.9375 17.1437 25.35L17.8312 24.6688C18.425 24.075 18.4125 23.1062 17.8062 22.525Z" fill="white" />
+                                                    </g>
+                                                    <defs>
+                                                        <clipPath id="clip0_2_194">
+                                                            <rect width="32" height="32" fill="white" />
+                                                        </clipPath>
+                                                    </defs>
+                                                </svg>
+                                                Déconnexion
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     )}
                 </div>
 
