@@ -34,3 +34,8 @@ export interface TypingNotification {
     conversationId: string;         // UUID de la conversation
     isTyping: boolean;              // true si en train d'écrire
 }
+
+export interface ConversationDeletedNotification {
+    conversationId: string;         // UUID de la conversation supprimée
+    deletedBy: string;              // UUID de l'utilisateur qui a supprimé
+}

@@ -41,9 +41,11 @@ const Sidebar = () => {
     const fetchUnreadCount = async () => {
       try {
         const count = await messageService.getUnreadCount();
-        setUnreadMessagesCount(count);
+        console.log('📊 [Sidebar] Unread messages count:', count, typeof count);
+        setUnreadMessagesCount(typeof count === 'number' ? count : 0);
       } catch (error) {
         // Silencieusement ignorer les erreurs (backend pas encore prêt)
+        console.log('⚠️ [Sidebar] Error fetching unread count:', error);
         setUnreadMessagesCount(0);
       }
     };
@@ -123,29 +125,24 @@ const Sidebar = () => {
                   <div className="flex-shrink-0 relative">
                     <Icon isActive={isActive} />
                     {showBadge && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#EC3558] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#EC3558] border-2 border-white rounded-full flex items-center justify-center">
+                        <span className="text-white text-[11px] font-bold">
+                          {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                        </span>
                       </div>
                     )}
                   </div>
                   {!isCollapsed && (
-                    <div className="flex items-center justify-between flex-1">
-                      <span
-                        className="text-lg font-medium capitalize tracking-[-0.63px]"
-                        style={{
-                          fontFamily: '"SF Pro", sans-serif',
-                          fontWeight: 590,
-                          color: isActive ? '#252525' : '#8A96A3'
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                      {showBadge && (
-                        <div className="w-6 h-6 bg-[#EC3558] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                          {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                        </div>
-                      )}
-                    </div>
+                    <span
+                      className="flex-1 text-lg font-medium capitalize tracking-[-0.63px]"
+                      style={{
+                        fontFamily: '"SF Pro", sans-serif',
+                        fontWeight: 590,
+                        color: isActive ? '#252525' : '#8A96A3'
+                      }}
+                    >
+                      {item.label}
+                    </span>
                   )}
                 </Link>
               </li>

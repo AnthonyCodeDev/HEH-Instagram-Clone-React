@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { MessageDto, SendMessageRequest, TypingNotification } from '../types/message';
+import { MessageDto, SendMessageRequest, TypingNotification, ConversationDeletedNotification } from '../types/message';
 
 // ⚠️ IMPORTANT : Vérifiez que votre backend WebSocket est bien sur ce port
 // Si votre backend principal est sur 8081, changez cette URL
@@ -23,11 +23,13 @@ interface UseWebSocketOptions {
  * 
  * @param onMessageReceived - Callback appelé quand un nouveau message est reçu
  * @param onTypingReceived - Callback appelé quand une notification de frappe est reçue
+ * @param onConversationDeleted - Callback appelé quand une conversation est supprimée
  * @param options - Options de configuration (enabled, etc.)
  */
 export const useWebSocket = (
     onMessageReceived: (message: MessageDto) => void,
     onTypingReceived?: (typing: TypingNotification) => void,
+    onConversationDeleted?: (notification: ConversationDeletedNotification) => void,
     options: UseWebSocketOptions = { enabled: true }
 ): UseWebSocketReturn => {
     const [isConnected, setIsConnected] = useState(false);
@@ -100,6 +102,20 @@ export const useWebSocket = (
                         }
                     });
                 }
+
+                // S'abonner aux suppressions de conversations
+                if (onConversationDeleted) {
+                    // console.log('🗑️ [WebSocket] Souscription à /user/queue/conversation-deleted...');
+                    client.subscribe('/user/queue/conversation-deleted', (message) => {
+                        try {
+                            const notification: ConversationDeletedNotification = JSON.parse(message.body);
+                            console.log('🗑️ [WebSocket] Conversation supprimée reçue:', notification);
+                            onConversationDeleted(notification);
+                        } catch (err) {
+                            console.error('❌ [WebSocket] Erreur parsing conversation deleted:', err);
+                        }
+                    });
+                }
             },
             onStompError: (frame) => {
                 console.error('❌ [WebSocket] Erreur STOMP:', frame.headers['message']);
@@ -128,7 +144,7 @@ export const useWebSocket = (
                 client.deactivate();
             }
         };
-    }, [onMessageReceived, onTypingReceived, enabled]); // Ajouter enabled dans les dépendances
+    }, [onMessageReceived, onTypingReceived, onConversationDeleted, enabled]); // Ajouter enabled dans les dépendances
 
     /**
      * Envoie un message via WebSocket

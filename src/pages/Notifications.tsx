@@ -1,9 +1,20 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import RightBar from "@/components/RightBar";
 import MobileNavbar from "@/components/MobileNavbar";
 import NotificationsList from "@/components/NotificationsList";
 
 const Notifications = () => {
+  const navigate = useNavigate();
+
+  // Vérifier l'authentification
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+    }
+  }, [navigate]);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">

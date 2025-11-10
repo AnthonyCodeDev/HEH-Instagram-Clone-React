@@ -153,12 +153,22 @@ export const messageService = {
             });
 
             if (!response.ok) {
+                console.log('⚠️ [MessageService] getUnreadCount failed:', response.status);
                 throw new Error(`Failed to fetch unread count: ${response.status}`);
             }
 
-            return await response.json();
+            const data = await response.json();
+            console.log('📊 [MessageService] getUnreadCount response:', data, typeof data);
+
+            // Si le backend renvoie un objet avec une propriété count
+            if (typeof data === 'object' && data !== null && 'count' in data) {
+                return data.count;
+            }
+
+            // Sinon retourner directement (si c'est déjà un nombre)
+            return typeof data === 'number' ? data : 0;
         } catch (error) {
-            console.error('Error fetching unread count:', error);
+            console.error('❌ [MessageService] Error fetching unread count:', error);
             throw error;
         }
     },

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send, Loader2, AlertCircle, Wifi, WifiOff, Trash2 } from "lucide-react";
 import { messageService } from "@/services/messageService";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { ConversationDto, MessageDto } from "@/types/message";
+import { ConversationDto, MessageDto, ConversationDeletedNotification } from "@/types/message";
 import { userService } from "@/services/userService";
 import { format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,6 +20,7 @@ interface SearchUser {
 }
 
 const Messages = () => {
+    const navigate = useNavigate();
     const [conversations, setConversations] = useState<ConversationDto[]>([]);
     const [messages, setMessages] = useState<Record<string, MessageDto[]>>({});
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -29,13 +30,20 @@ const Messages = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    // Vérifier l'authentification
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/signin');
+        }
+    }, [navigate]);
     const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
     const [backendAvailable, setBackendAvailable] = useState(false); // Commencer à false, sera mis à true si le backend répond
     const [searchUsers, setSearchUsers] = useState<SearchUser[]>([]); // Résultats de recherche d'utilisateurs
     const [isSearching, setIsSearching] = useState(false); // État de chargement de la recherche
     const [showSearchDropdown, setShowSearchDropdown] = useState(false); // Afficher le dropdown de recherche
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
     const searchDropdownRef = useRef<HTMLDivElement>(null);
@@ -150,18 +158,64 @@ const Messages = () => {
             };
         });
 
-        // Mettre à jour la conversation dans la liste
-        setConversations(prev => prev.map(conv => {
-            if (conv.id === message.conversationId) {
-                return {
-                    ...conv,
+        // Mettre à jour ou créer la conversation dans la liste
+        setConversations(prev => {
+            // Chercher la conversation par son ID OU par l'autre utilisateur
+            const conversationByIdIndex = prev.findIndex(conv => conv.id === message.conversationId);
+            const conversationByUserIndex = message.senderId !== currentUserId
+                ? prev.findIndex(conv => conv.otherUserId === message.senderId)
+                : -1;
+
+            // Si la conversation existe (par ID ou par utilisateur)
+            if (conversationByIdIndex !== -1 || conversationByUserIndex !== -1) {
+                const existingIndex = conversationByIdIndex !== -1 ? conversationByIdIndex : conversationByUserIndex;
+                const existingConv = prev[existingIndex];
+
+                // Si l'ID change et que c'est la conversation active, mettre à jour activeConversationId
+                if (existingConv.id !== message.conversationId && existingConv.id === activeConversationId) {
+                    console.log('🔄 Mise à jour de l\'ID de la conversation active:', existingConv.id, '→', message.conversationId);
+                    setActiveConversationId(message.conversationId);
+                }
+
+                // La conversation existe, la mettre à jour
+                const updated = prev.map((conv, index) => {
+                    if (index === existingIndex) {
+                        return {
+                            ...conv,
+                            id: message.conversationId, // Mettre à jour l'ID si nécessaire
+                            lastMessage: message,
+                            unreadCount: message.senderId !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount,
+                            updatedAt: message.sentAt
+                        };
+                    }
+                    return conv;
+                });
+                return updated.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+            } else if (message.senderId !== currentUserId) {
+                // La conversation n'existe pas encore ET ce n'est pas nous qui envoyons, la créer
+                console.log('🆕 Nouvelle conversation détectée, création...');
+
+                // Créer une nouvelle conversation avec les infos du message
+                const newConversation: ConversationDto = {
+                    id: message.conversationId,
+                    otherUserId: message.senderId,
+                    otherUserUsername: message.senderUsername,
+                    otherUserAvatarUrl: message.senderAvatarUrl,
                     lastMessage: message,
-                    unreadCount: message.senderId !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount,
+                    unreadCount: 1,
+                    createdAt: message.sentAt,
                     updatedAt: message.sentAt
                 };
+
+                return [newConversation, ...prev].sort((a, b) =>
+                    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                );
             }
-            return conv;
-        }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+
+            // Si c'est nous qui envoyons à quelqu'un qui n'est pas dans notre liste, ne rien faire
+            // (la conversation sera créée par le backend lors de l'envoi)
+            return prev;
+        });
 
         // Si la conversation est active, marquer comme lu
         if (message.conversationId === activeConversationId && message.senderId !== currentUserId) {
@@ -193,10 +247,38 @@ const Messages = () => {
         }, 3000);
     }, []);
 
+    // Callback pour recevoir les notifications de suppression de conversation
+    const handleConversationDeleted = useCallback((notification: any) => {
+        console.log('🗑️ Conversation deleted notification:', notification);
+
+        const { conversationId } = notification;
+
+        // Retirer la conversation de la liste
+        setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+
+        // Retirer les messages de cette conversation
+        setMessages(prev => {
+            const newMessages = { ...prev };
+            delete newMessages[conversationId];
+            return newMessages;
+        });
+
+        // Si c'était la conversation active, la désélectionner
+        if (activeConversationId === conversationId) {
+            setActiveConversationId(null);
+        }
+
+        // Mettre à jour le compteur
+        window.dispatchEvent(new CustomEvent('unreadMessagesChanged'));
+
+        console.log('✅ Conversation supprimée localement suite à notification WebSocket');
+    }, [activeConversationId]);
+
     // Initialiser la connexion WebSocket (seulement si le backend est disponible)
     const { isConnected, sendMessage: wsSendMessage, sendTyping, error: wsError } = useWebSocket(
         handleMessageReceived,
         handleTypingReceived,
+        handleConversationDeleted,
         { enabled: backendAvailable } // Ne connecter que si le backend est disponible
     );
 
@@ -599,12 +681,6 @@ const Messages = () => {
                                                         <AvatarImage src={conversation.otherUserAvatarUrl} alt={conversation.otherUserUsername} />
                                                         <AvatarFallback>{conversation.otherUserUsername.charAt(0).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
-                                                    {/* Badge de messages non lus */}
-                                                    {conversation.unreadCount > 0 && (
-                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#EC3558] text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                                                            {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                                                        </div>
-                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0 hidden sm:block lg:block">
                                                     <div className="font-medium text-gray-900">
