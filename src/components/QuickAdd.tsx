@@ -39,7 +39,7 @@ const QuickAdd = () => {
   }, []);
 
   // Log pour le débogage
-  console.log('Profiles received:', profiles);
+  // console.log('Profiles received:', profiles);
 
   // S'assurer que profiles est un tableau
   const profilesArray = Array.isArray(profiles) ? profiles : [];

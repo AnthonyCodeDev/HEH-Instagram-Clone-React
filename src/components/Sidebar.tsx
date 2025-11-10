@@ -5,6 +5,7 @@ import { useSidebarBreakpoint } from "@/hooks/use-mobile";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HomeIcon, NotificationIcon, MessageIcon, ProfileIcon, SettingsIcon, LogoutIcon } from "./SidebarIcons";
+import { messageService } from "@/services/messageService";
 
 
 const getMenuItems = () => {
@@ -26,11 +27,45 @@ const Sidebar = () => {
   // Pour éviter l'animation au chargement initial
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // État pour le nombre de messages non lus
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+
   // Initialiser isCollapsed en fonction de la taille de l'écran
   // Utiliser useState avec une fonction pour garantir que la valeur initiale est correcte
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return window.innerWidth < 1300;
   });
+
+  // Charger le nombre de messages non lus
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await messageService.getUnreadCount();
+        console.log('📊 [Sidebar] Unread messages count:', count, typeof count);
+        setUnreadMessagesCount(typeof count === 'number' ? count : 0);
+      } catch (error) {
+        // Silencieusement ignorer les erreurs (backend pas encore prêt)
+        console.log('⚠️ [Sidebar] Error fetching unread count:', error);
+        setUnreadMessagesCount(0);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Recharger toutes les 30 secondes
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    // Écouter l'événement personnalisé pour rafraîchir immédiatement
+    const handleUnreadChanged = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('unreadMessagesChanged', handleUnreadChanged);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('unreadMessagesChanged', handleUnreadChanged);
+    };
+  }, []);
 
   // Gère l'état de la sidebar en fonction de la largeur de l'écran après le chargement initial
   useEffect(() => {
@@ -79,15 +114,23 @@ const Sidebar = () => {
           {getMenuItems().map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
+            const showBadge = item.label === "Messages" && unreadMessagesCount > 0;
 
             return (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-smooth hover:bg-gray-50"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-smooth hover:bg-gray-50 relative"
                 >
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 relative">
                     <Icon isActive={isActive} />
+                    {showBadge && (
+                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#EC3558] border-2 border-white rounded-full flex items-center justify-center">
+                        <span className="text-white text-[11px] font-bold">
+                          {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   {!isCollapsed && (
                     <span

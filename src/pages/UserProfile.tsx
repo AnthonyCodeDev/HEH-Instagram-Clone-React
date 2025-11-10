@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Settings } from "lucide-react";
 import defaultBackground from "@/assets/default-background.png";
 import Sidebar from "@/components/Sidebar";
@@ -21,6 +21,7 @@ interface UserProfileState {
 
 const UserProfile = () => {
   const { username } = useParams();
+  const navigate = useNavigate();
   const [state, setState] = useState<UserProfileState>({
     user: null,
     posts: [],
@@ -30,6 +31,14 @@ const UserProfile = () => {
     hasMore: true
   });
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+
+  // Vérifier l'authentification
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+    }
+  }, [navigate]);
 
   // Charger l'utilisateur courant
   useEffect(() => {
