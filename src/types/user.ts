@@ -1,6 +1,6 @@
 export interface SocialLinks {
     tiktok?: string;
-    instagram?: string;
+    youtube?: string;
     twitter?: string;
     // Ajoutez d'autres réseaux sociaux selon vos besoins
 }
@@ -13,6 +13,9 @@ export interface UserResponse {
     bio?: string;
     avatarUrl: string | null;
     bannerUrl?: string | null;
+    phone?: string;             // ✅ NOUVEAU
+    location?: string;          // ✅ NOUVEAU
+    birthdate?: string;         // ✅ NOUVEAU (format: YYYY-MM-DD)
     followersCount?: number;
     followingCount?: number;
     createdAt?: string;
@@ -62,4 +65,26 @@ export interface FollowResponse {
     followerId: string;
     followingId: string;
     createdAt: string;
+}
+
+export interface UpdateUserRequest {
+    username: string;
+    email: string;
+    bio?: string;
+    avatarUrl?: string;
+    name?: string;
+    bannerUrl?: string;
+    phone?: string;
+    location?: string;
+    birthdate?: string;        // format: YYYY-MM-DD
+    socialLinks?: {
+        tiktok?: string;
+        twitter?: string;
+        youtube?: string;
+    };
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;       // min 8 caractères
 }

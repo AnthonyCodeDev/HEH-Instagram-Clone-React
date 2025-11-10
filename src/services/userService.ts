@@ -1,4 +1,4 @@
-import { UserResponse, SearchUserResponse, PostListResponse } from '../types/user';
+import { UserResponse, SearchUserResponse, PostListResponse, UpdateUserRequest, ChangePasswordRequest } from '../types/user';
 
 const API_URL = 'http://localhost:8081';
 
@@ -138,6 +138,122 @@ export const userService = {
             })); // Retourne le tableau users de la réponse
         } catch (error) {
             console.error('Error fetching random users:', error);
+            throw error;
+        }
+    },
+
+    async updateUser(userData: UpdateUserRequest): Promise<UserResponse> {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const response = await fetch(`${API_URL}/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update user: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating user:', error);
+            throw error;
+        }
+    },
+
+    async uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', file);  // Le backend attend 'avatar' comme nom de champ
+
+            const response = await fetch(`${API_URL}/users/avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Ne pas ajouter 'Content-Type' - laissez le navigateur le définir automatiquement pour multipart/form-data
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Avatar upload error response:', errorText);
+                throw new Error(`Failed to upload avatar: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            throw error;
+        }
+    },
+
+    async uploadBanner(file: File): Promise<{ bannerUrl: string }> {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const formData = new FormData();
+            formData.append('banner', file);  // Le backend attend 'banner' comme nom de champ
+
+            const response = await fetch(`${API_URL}/users/banner`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Ne pas ajouter 'Content-Type' - laissez le navigateur le définir automatiquement pour multipart/form-data
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Banner upload error response:', errorText);
+                throw new Error(`Failed to upload banner: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error uploading banner:', error);
+            throw error;
+        }
+    },
+
+    async changePassword(passwordData: ChangePasswordRequest): Promise<void> {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const response = await fetch(`${API_URL}/users/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(passwordData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to change password: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error changing password:', error);
             throw error;
         }
     }
