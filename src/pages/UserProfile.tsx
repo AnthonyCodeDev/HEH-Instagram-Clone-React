@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { userService } from "@/services/userService";
 import { bookmarkService } from "@/services/bookmarkService";
-import { likesService } from "@/services/likesService"; // ✅ Renommé
+import { likesService } from "@/services/likesService";
+import FollowersFollowingDialog from "@/components/FollowersFollowingDialog";
 import type { UserResponse, PostResponse } from "@/types/user";
 
 interface UserProfileState {
@@ -32,7 +33,9 @@ interface UserProfileState {
 const UserProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>("posts"); // ✅ NOUVEAU: Gérer l'onglet actif
+  const [activeTab, setActiveTab] = useState<string>("posts");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogInitialTab, setDialogInitialTab] = useState<"followers" | "following">("followers");
   const [state, setState] = useState<UserProfileState>({
     user: null,
     posts: [],
@@ -461,11 +464,27 @@ const UserProfile = () => {
                   <p className="text-gray-800 mb-4 leading-relaxed">{state.user.bio}</p>
 
                   <div className="flex items-center gap-1 text-gray-600 mb-4">
-                    <span className="font-semibold text-gray-900">{state.user.followersCount}</span>
-                    <span>abonnés</span>
+                    <button
+                      onClick={() => {
+                        setDialogInitialTab("followers");
+                        setDialogOpen(true);
+                      }}
+                      className="hover:underline cursor-pointer"
+                    >
+                      <span className="font-semibold text-gray-900">{state.user.followersCount}</span>
+                      <span> abonnés</span>
+                    </button>
                     <span className="mx-2">•</span>
-                    <span className="font-semibold text-gray-900">{state.user.followingCount}</span>
-                    <span>abonnements</span>
+                    <button
+                      onClick={() => {
+                        setDialogInitialTab("following");
+                        setDialogOpen(true);
+                      }}
+                      className="hover:underline cursor-pointer"
+                    >
+                      <span className="font-semibold text-gray-900">{state.user.followingCount}</span>
+                      <span> abonnements</span>
+                    </button>
                   </div>
 
                   {/* Social Links */}
@@ -924,6 +943,18 @@ const UserProfile = () => {
         </div>
         <RightBar />
       </div>
+      
+      {/* Dialog pour afficher les followers/following */}
+      {state.user && (
+        <FollowersFollowingDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          userId={state.user.id}
+          initialTab={dialogInitialTab}
+          followersCount={state.user.followersCount}
+          followingCount={state.user.followingCount}
+        />
+      )}
     </div>
   );
 };
