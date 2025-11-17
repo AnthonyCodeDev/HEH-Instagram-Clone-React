@@ -8,29 +8,51 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { userService } from "@/services/userService";
+import { bookmarkService } from "@/services/bookmarkService";
+import { likesService } from "@/services/likesService"; // ✅ Renommé
 import type { UserResponse, PostResponse } from "@/types/user";
 
 interface UserProfileState {
   user: UserResponse | null;
   posts: PostResponse[];
+  bookmarkedPosts: PostResponse[];  // ✅ Posts bookmarkés
+  likedPosts: PostResponse[];        // ✅ NOUVEAU: Posts likés (favorites)
   loading: boolean;
   error: string | null;
   page: number;
   hasMore: boolean;
+  bookmarksPage: number;             // ✅ Page pour les bookmarks
+  hasMoreBookmarks: boolean;         // ✅ Plus de bookmarks disponibles
+  totalBookmarks: number;            // ✅ Total des bookmarks
+  likesPage: number;                 // ✅ NOUVEAU: Page pour les likes
+  hasMoreLikes: boolean;             // ✅ NOUVEAU: Plus de likes disponibles
+  totalLikes: number;                // ✅ NOUVEAU: Total des likes
 }
 
 const UserProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>("posts"); // ✅ NOUVEAU: Gérer l'onglet actif
   const [state, setState] = useState<UserProfileState>({
     user: null,
     posts: [],
+    bookmarkedPosts: [],  // ✅ Posts bookmarkés
+    likedPosts: [],       // ✅ NOUVEAU: Posts likés
     loading: true,
     error: null,
     page: 0,
-    hasMore: true
+    hasMore: true,
+    bookmarksPage: 0,     // ✅ Bookmarks
+    hasMoreBookmarks: true,
+    totalBookmarks: 0,
+    likesPage: 0,         // ✅ NOUVEAU: Likes
+    hasMoreLikes: true,
+    totalLikes: 0
   });
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+
+  // Variable pour savoir si on est sur son propre profil (défini tôt pour être utilisé partout)
+  const isOwnProfile = currentUser && currentUser.username === username;
 
   // Vérifier l'authentification
   useEffect(() => {
@@ -86,12 +108,54 @@ const UserProfile = () => {
         const userData = await userService.getUserByUsername(username);
         const postsData = await userService.getUserPosts(userData.id);
 
+        // ✅ Si c'est notre propre profil, précharger TOUTES les données
+        let bookmarksCount = 0;
+        let likesCount = 0;
+        let bookmarkedPostsData: any[] = [];
+        let likedPostsData: any[] = [];
+        
+        if (currentUser && userData.id === currentUser.id) {
+          console.log('[UserProfile] 🔄 Loading ALL data for own profile (posts, bookmarks, likes)');
+          
+          // Charger tout en parallèle pour optimiser le temps de chargement
+          const [bookmarksResult, likesResult, bookmarksCountResult, likesCountResult] = await Promise.all([
+            bookmarkService.getBookmarkedPosts(0, 12).catch(err => {
+              console.error('[UserProfile] Error loading bookmarks:', err);
+              return { posts: [], hasMore: false };
+            }),
+            likesService.getLikedPosts(0, 12).catch(err => {
+              console.error('[UserProfile] Error loading likes:', err);
+              return { posts: [], hasMore: false };
+            }),
+            bookmarkService.getBookmarksCount().catch(() => 0),
+            likesService.getLikesCount().catch(() => 0)
+          ]);
+          
+          bookmarkedPostsData = bookmarksResult.posts;
+          likedPostsData = likesResult.posts;
+          bookmarksCount = bookmarksCountResult;
+          likesCount = likesCountResult;
+          
+          console.log('[UserProfile] ✅ Preloaded data:');
+          console.log('  - Posts:', postsData.posts.length);
+          console.log('  - Bookmarks:', bookmarkedPostsData.length, '(total:', bookmarksCount + ')');
+          console.log('  - Likes:', likedPostsData.length, '(total:', likesCount + ')');
+        } else {
+          console.log('[UserProfile] Not own profile, currentUser:', currentUser?.username, 'userData:', userData.username);
+        }
+
         setState(prev => ({
           ...prev,
           user: userData,
           posts: postsData.posts,
           page: postsData.page,
           hasMore: postsData.hasMore,
+          bookmarkedPosts: bookmarkedPostsData, // ✅ Précharger
+          likedPosts: likedPostsData, // ✅ Précharger
+          totalBookmarks: bookmarksCount,
+          totalLikes: likesCount,
+          hasMoreBookmarks: bookmarkedPostsData.length >= 12, // S'il y a 12 posts, il y en a peut-être plus
+          hasMoreLikes: likedPostsData.length >= 12,
           loading: false
         }));
       } catch (error) {
@@ -105,7 +169,29 @@ const UserProfile = () => {
     };
 
     loadUser();
-  }, [username]);
+  }, [username, currentUser]); // ✅ Ajouter currentUser dans les dépendances
+
+  // ✅ NOUVEAU: Recharger le compteur de bookmarks quand on revient sur la page
+  useEffect(() => {
+    const reloadBookmarksCount = async () => {
+      if (isOwnProfile) {
+        const count = await bookmarkService.getBookmarksCount();
+        console.log('[UserProfile] Reloaded bookmarks count:', count);
+        setState(prev => ({ ...prev, totalBookmarks: count }));
+      }
+    };
+
+    // Recharger au focus de la fenêtre
+    const handleFocus = () => {
+      reloadBookmarksCount();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isOwnProfile]);
 
   // Charger plus de posts
   const loadMorePosts = async () => {
@@ -129,6 +215,126 @@ const UserProfile = () => {
         ...prev,
         loading: false,
         error: 'Erreur lors du chargement des posts'
+      }));
+    }
+  };
+
+  // ✅ NOUVEAU: Charger les posts bookmarkés (uniquement pour son propre profil)
+  const loadBookmarkedPosts = async () => {
+    if (!isOwnProfile) {
+      console.log('[UserProfile] Not own profile, skipping bookmarks load');
+      return;  // Seulement sur son propre profil
+    }
+
+    console.log('[UserProfile] Loading bookmarked posts...');
+    setState(prev => ({ ...prev, loading: true }));
+
+    try {
+      const bookmarksData = await bookmarkService.getBookmarkedPosts(0, 12);
+      console.log('[UserProfile] Bookmarked posts loaded:', bookmarksData);
+
+      setState(prev => ({
+        ...prev,
+        bookmarkedPosts: bookmarksData.posts,
+        bookmarksPage: bookmarksData.page,
+        hasMoreBookmarks: bookmarksData.hasMore,
+        totalBookmarks: bookmarksData.totalBookmarks || 0,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('[UserProfile] Error loading bookmarks:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        bookmarkedPosts: [],
+        totalBookmarks: 0,
+        error: null // Ne pas afficher d'erreur, juste liste vide
+      }));
+    }
+  };
+
+  // ✅ NOUVEAU: Charger plus de bookmarks
+  const loadMoreBookmarks = async () => {
+    if (!state.hasMoreBookmarks || state.loading) return;
+
+    setState(prev => ({ ...prev, loading: true }));
+
+    try {
+      const nextPage = state.bookmarksPage + 1;
+      const bookmarksData = await bookmarkService.getBookmarkedPosts(nextPage, 12);
+
+      setState(prev => ({
+        ...prev,
+        bookmarkedPosts: [...prev.bookmarkedPosts, ...bookmarksData.posts],
+        bookmarksPage: bookmarksData.page,
+        hasMoreBookmarks: bookmarksData.hasMore,
+        loading: false
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Erreur lors du chargement des enregistrements'
+      }));
+    }
+  };
+
+  // ✅ NOUVEAU: Charger les posts likés (favorites) - uniquement pour son propre profil
+  const loadLikedPosts = async () => {
+    if (!isOwnProfile) {
+      console.log('[UserProfile] Not own profile, skipping likes load');
+      return;
+    }
+
+    console.log('[UserProfile] Loading liked posts...');
+    setState(prev => ({ ...prev, loading: true }));
+
+    try {
+      const likesData = await likesService.getLikedPosts(0, 12);
+      console.log('[UserProfile] Liked posts loaded:', likesData);
+
+      setState(prev => ({
+        ...prev,
+        likedPosts: likesData.posts,
+        likesPage: likesData.page,
+        hasMoreLikes: likesData.hasMore,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('[UserProfile] Error loading likes:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        likedPosts: [],
+        error: null
+      }));
+    }
+  };
+
+  // ✅ NOUVEAU: Charger plus de posts likés
+  const loadMoreLikes = async () => {
+    if (!state.hasMoreLikes || state.loading) return;
+
+    setState(prev => ({ ...prev, loading: true }));
+
+    try {
+      const nextPage = state.likesPage + 1;
+      const likesData = await likesService.getLikedPosts(nextPage, 12);
+
+      setState(prev => ({
+        ...prev,
+        likedPosts: [...prev.likedPosts, ...likesData.posts],
+        likesPage: likesData.page,
+        hasMoreLikes: likesData.hasMore,
+        loading: false
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Erreur lors du chargement des likes'
       }));
     }
   };
@@ -186,6 +392,10 @@ const UserProfile = () => {
                 src={state.user.bannerUrl || defaultBackground}
                 alt="Cover"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback vers l'image par défaut si l'URL ne fonctionne pas
+                  e.currentTarget.src = defaultBackground;
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
@@ -376,20 +586,59 @@ const UserProfile = () => {
 
             {/* Content Tabs */}
             <div className="bg-white rounded-2xl shadow-sm">
-              <Tabs defaultValue="posts" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto border-b border-gray-200">
+              <Tabs 
+                value={activeTab}
+                onValueChange={async (value) => {
+                  console.log('[UserProfile] Tab changing to:', value);
+                  setActiveTab(value);
+                  
+                  // ✅ Optionnel: Recharger les compteurs pour avoir les chiffres à jour
+                  // (au cas où ils ont changé depuis le chargement initial)
+                  if (isOwnProfile) {
+                    const [bookmarksCount, likesCount] = await Promise.all([
+                      bookmarkService.getBookmarksCount(),
+                      likesService.getLikesCount()
+                    ]);
+                    console.log('[UserProfile] Counts refreshed - bookmarks:', bookmarksCount, 'likes:', likesCount);
+                    setState(prev => ({ 
+                      ...prev, 
+                      totalBookmarks: bookmarksCount,
+                      totalLikes: likesCount
+                    }));
+                  }
+                  
+                  // ℹ️ Les données sont déjà préchargées au chargement initial
+                  // Pas besoin de charger ici, sauf si tu veux forcer un refresh
+                }}
+                className="w-full"
+              >
+                <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-3' : 'grid-cols-1'} bg-transparent p-0 h-auto border-b border-gray-200`}>
                   <TabsTrigger
                     value="posts"
                     className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
                   >
-                    {state.posts.length} PUBLICATIONS
+                    PUBLICATIONS ({state.posts.length})
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="videos"
-                    className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
-                  >
-                    0 VIDEOS
-                  </TabsTrigger>
+                  
+                  {/* ✅ NOUVEAU: Onglet Likes/Favorites (visible uniquement sur son propre profil) */}
+                  {isOwnProfile && (
+                    <TabsTrigger
+                      value="likes"
+                      className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
+                    >
+                      LIKES ({state.totalLikes})
+                    </TabsTrigger>
+                  )}
+                  
+                  {/* ✅ Onglet Enregistrements (visible uniquement sur son propre profil) */}
+                  {isOwnProfile && (
+                    <TabsTrigger
+                      value="bookmarks"
+                      className="flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-stragram-primary data-[state=active]:text-stragram-primary rounded-none"
+                    >
+                      ENREGISTREMENTS ({state.totalBookmarks})
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="posts" className="p-0 mt-0">
@@ -409,8 +658,22 @@ const UserProfile = () => {
                             {post.imageUrl ? (
                               <img
                                 src={post.imageUrl}
-                                alt={post.description}
+                                alt={post.description || 'Post'}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback si l'image n'existe pas sur le serveur
+                                  e.currentTarget.style.display = 'none';
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                        <p class="text-sm text-gray-600 line-clamp-4 text-center">
+                                          ${post.description || "Image non disponible"}
+                                        </p>
+                                      </div>
+                                    `;
+                                  }
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
@@ -458,11 +721,203 @@ const UserProfile = () => {
                     </>
                   )}
                 </TabsContent>
-                <TabsContent value="videos" className="p-0 mt-0">
-                  <div className="flex items-center justify-center h-64 text-gray-500">
-                    Aucune vidéo
-                  </div>
-                </TabsContent>
+                
+                {/* ✅ NOUVEAU: Onglet Likes/Favorites */}
+                {isOwnProfile && (
+                  <TabsContent value="likes" className="p-0 mt-0">
+                    {state.likedPosts.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-16 w-16 mb-4 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                        <p className="text-lg font-medium">Aucun post liké</p>
+                        <p className="text-sm text-gray-400">Les posts que vous aimez apparaîtront ici</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-1">
+                          {state.likedPosts.map((post) => (
+                            <Link
+                              key={post.id}
+                              to={`/p/${post.id}`}
+                              className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
+                            >
+                              {post.imageUrl ? (
+                                <img
+                                  src={post.imageUrl}
+                                  alt={post.description || 'Post'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = `
+                                        <div class="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                          <p class="text-sm text-gray-600 line-clamp-4 text-center">
+                                            ${post.description || "Image non disponible"}
+                                          </p>
+                                        </div>
+                                      `;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                  <p className="text-sm text-gray-600 line-clamp-4 text-center">
+                                    {post.description || "Aucune description"}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <div className="flex items-center gap-2 text-white">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                  </svg>
+                                  <span>{post.likeCount}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path d="M21 15a2 2 0 0 1-2 2h-2v3.17c0 .53-.61.83-1.03.5L11.83 17H8c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h11c1.1 0 2 .9 2 2v8zM3 6v8c0 1.1.9 2 2 2h2v-9c0-.55.45-1 1-1h9V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z" />
+                                  </svg>
+                                  <span>{post.commentCount}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        {state.hasMoreLikes && (
+                          <div className="text-center py-4">
+                            <Button variant="outline" onClick={loadMoreLikes} disabled={state.loading}>
+                              {state.loading ? "Chargement..." : "Charger plus"}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </TabsContent>
+                )}
+                
+                {/* ✅ Onglet Enregistrements */}
+                {isOwnProfile && (
+                  <TabsContent value="bookmarks" className="p-0 mt-0">
+                    {state.bookmarkedPosts.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-16 w-16 mb-4 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                          />
+                        </svg>
+                        <p className="text-lg font-medium">Aucun post enregistré</p>
+                        <p className="text-sm text-gray-400">Les posts que vous enregistrez apparaîtront ici</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-1">
+                          {state.bookmarkedPosts.map((post) => (
+                            <Link
+                              key={post.id}
+                              to={`/p/${post.id}`}
+                              className="aspect-square overflow-hidden hover:opacity-90 transition-opacity cursor-pointer relative"
+                            >
+                              {post.imageUrl ? (
+                                <img
+                                  src={post.imageUrl}
+                                  alt={post.description || 'Post'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback si l'image n'existe pas sur le serveur
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = `
+                                        <div class="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                          <p class="text-sm text-gray-600 line-clamp-4 text-center">
+                                            ${post.description || "Image non disponible"}
+                                          </p>
+                                        </div>
+                                      `;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
+                                  <p className="text-sm text-gray-600 line-clamp-4 text-center">
+                                    {post.description || "Aucune description"}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <div className="flex items-center gap-2 text-white">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                  </svg>
+                                  <span>{post.likeCount}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5"
+                                  >
+                                    <path d="M21 15a2 2 0 0 1-2 2h-2v3.17c0 .53-.61.83-1.03.5L11.83 17H8c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h11c1.1 0 2 .9 2 2v8zM3 6v8c0 1.1.9 2 2 2h2v-9c0-.55.45-1 1-1h9V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z" />
+                                  </svg>
+                                  <span>{post.commentCount}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        {state.hasMoreBookmarks && (
+                          <div className="text-center py-4">
+                            <Button variant="outline" onClick={loadMoreBookmarks} disabled={state.loading}>
+                              {state.loading ? "Chargement..." : "Charger plus"}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </TabsContent>
+                )}
               </Tabs>
             </div>
           </div>

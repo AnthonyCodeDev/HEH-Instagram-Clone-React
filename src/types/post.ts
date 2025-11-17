@@ -9,8 +9,8 @@ export interface PostResponse {
     commentCount: number;
     createdAt: string;
     updatedAt: string | null;
-    likedByCurrentUser: boolean;
-    favoritedByCurrentUser: boolean;
+    likedByCurrentUser: boolean;          // Backend utilise sans "is"
+    bookmarkedByCurrentUser: boolean;     // Backend utilise sans "is"
 }
 
 export interface Comment {
@@ -35,4 +35,21 @@ export interface PostListResponse {
     page: number;
     size: number;
     hasMore: boolean;
+}
+
+// ✅ NOUVEAU : Réponse d'un bookmark
+export interface BookmarkResponse {
+    id: string;
+    userId: string;
+    postId: string;
+    createdAt: string;
+}
+
+// ✅ NOUVEAU : Liste des posts bookmarkés
+export interface BookmarkedPostsResponse {
+    posts: PostResponse[];
+    page: number;
+    size: number;
+    hasMore: boolean;
+    totalBookmarks: number;
 }

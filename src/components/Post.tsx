@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { bookmarkService } from "@/services/bookmarkService";
+import { toast } from "@/components/ui/use-toast";
 
 interface PostProps {
+  postId?: string;  // ✅ AJOUT: ID du post pour les bookmarks
   user: {
     name: string;
     username: string;
@@ -15,17 +18,61 @@ interface PostProps {
   image?: string;
   likes: number;
   timestamp: string;
+  isBookmarked?: boolean;  // ✅ AJOUT: État initial du bookmark
+  onBookmarkChange?: (postId: string, isBookmarked: boolean) => void;  // ✅ Callback pour mettre à jour l'état parent
 }
 
-const Post = ({ user, content, image, likes, timestamp }: PostProps) => {
+const Post = ({ postId, user, content, image, likes, timestamp, isBookmarked: initialIsBookmarked = false, onBookmarkChange }: PostProps) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [isImageOpen, setIsImageOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(likes);
+  const [isBookmarking, setIsBookmarking] = useState(false);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+  };
+
+  // ✅ NOUVEAU: Gestion du bookmark avec appel API
+  const handleBookmark = async () => {
+    if (!postId) {
+      console.warn('No post ID provided');
+      return;
+    }
+
+    if (isBookmarking) return;  // Éviter les double-clics
+
+    setIsBookmarking(true);
+
+    try {
+      if (isBookmarked) {
+        await bookmarkService.unbookmarkPost(postId);
+        setIsBookmarked(false);
+        toast({
+          title: "Enregistrement retiré",
+          description: "Le post a été retiré de vos enregistrements.",
+        });
+        onBookmarkChange?.(postId, false);
+      } else {
+        await bookmarkService.bookmarkPost(postId);
+        setIsBookmarked(true);
+        toast({
+          title: "Post enregistré",
+          description: "Le post a été ajouté à vos enregistrements.",
+        });
+        onBookmarkChange?.(postId, true);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de modifier l'enregistrement.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBookmarking(false);
+    }
   };
 
   return (
@@ -64,11 +111,22 @@ const Post = ({ user, content, image, likes, timestamp }: PostProps) => {
                 src={image}
                 alt="Post content"
                 className="w-full h-auto object-cover"
+                onError={(e) => {
+                  // Masquer l'image si elle ne charge pas
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
             <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
               <DialogContent variant="bare" hideClose={false}>
-                <img src={image} alt="Post content large" className="max-h-[85vh] w-auto object-contain" />
+                <img 
+                  src={image} 
+                  alt="Post content large" 
+                  className="max-h-[85vh] w-auto object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               </DialogContent>
             </Dialog>
           </>
@@ -111,9 +169,11 @@ const Post = ({ user, content, image, likes, timestamp }: PostProps) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsBookmarked(!isBookmarked)}
+          onClick={handleBookmark}
+          disabled={isBookmarking}
           className={`${isBookmarked ? 'text-stragram-primary hover:text-stragram-primary/80' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            } ${isBookmarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={isBookmarked ? "Retirer des enregistrements" : "Enregistrer"}
         >
           <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
         </Button>

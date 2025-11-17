@@ -85,40 +85,6 @@ export const postService = {
         }
     },
 
-    async favoritePost(postId: string): Promise<void> {
-        try {
-            const response = await fetch(`${API_URL}/posts/${postId}/favorite`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to favorite post: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Error favoriting post:', error);
-            throw error;
-        }
-    },
-
-    async unfavoritePost(postId: string): Promise<void> {
-        try {
-            const response = await fetch(`${API_URL}/posts/${postId}/favorite`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to unfavorite post: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Error unfavoriting post:', error);
-            throw error;
-        }
-    },
-
     async deletePost(postId: string): Promise<void> {
         try {
             const response = await fetch(`${API_URL}/posts/${postId}`, {

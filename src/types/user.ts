@@ -34,8 +34,8 @@ export interface PostResponse {
     commentCount: number;
     createdAt: string;
     updatedAt: string | null;
-    isLikedByCurrentUser: boolean;
-    isFavoritedByCurrentUser: boolean;
+    likedByCurrentUser: boolean;          // Backend utilise sans "is"
+    bookmarkedByCurrentUser: boolean;     // Backend utilise sans "is"
 }
 
 export interface PostListResponse {

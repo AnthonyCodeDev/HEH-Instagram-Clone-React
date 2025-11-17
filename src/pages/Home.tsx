@@ -22,8 +22,8 @@ interface ApiPostResponse {
     commentCount: number;
     createdAt: string;
     updatedAt: string;
-    likedByCurrentUser: boolean; // Nom correct selon la réponse de l'API
-    favoritedByCurrentUser: boolean; // Nom correct selon la réponse de l'API
+    likedByCurrentUser: boolean;        // Nom selon la réponse de l'API
+    bookmarkedByCurrentUser: boolean;   // ✅ Nom selon la réponse de l'API
   }[];
   page: number;
   size: number;
@@ -169,6 +169,8 @@ const Home = () => {
         throw new Error('Non authentifié');
       }
 
+      console.log(`[Home] 🔵 LIKE POST: Calling POST /posts/${postId}/like`);
+      
       const response = await fetch(`http://localhost:8081/posts/${postId}/like`, {
         method: 'POST',
         headers: {
@@ -176,14 +178,18 @@ const Home = () => {
         }
       });
 
+      console.log(`[Home] 🔵 LIKE Response status: ${response.status}`);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.message || `Erreur ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log(`[Home] 🔵 LIKE Response data:`, result);
+      return result;
     } catch (error) {
-      console.error('Erreur lors du like:', error);
+      console.error('❌ Erreur lors du like:', error);
       throw error;
     }
   };
@@ -196,6 +202,8 @@ const Home = () => {
         throw new Error('Non authentifié');
       }
 
+      console.log(`[Home] 🔴 UNLIKE POST: Calling DELETE /posts/${postId}/like`);
+
       const response = await fetch(`http://localhost:8081/posts/${postId}/like`, {
         method: 'DELETE',
         headers: {
@@ -203,15 +211,18 @@ const Home = () => {
         }
       });
 
+      console.log(`[Home] 🔴 UNLIKE Response status: ${response.status}`);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.message || `Erreur ${response.status}`);
       }
 
       // La réponse est vide avec un statut 204
+      console.log(`[Home] 🔴 UNLIKE Success`);
       return true;
     } catch (error) {
-      console.error('Erreur lors du unlike:', error);
+      console.error('❌ Erreur lors du unlike:', error);
       throw error;
     }
   };
@@ -268,14 +279,16 @@ const Home = () => {
   };
 
   // Fonction pour ajouter un post aux favoris
-  const favoritePost = async (postId: string) => {
+  // ✅ Fonction pour ajouter un post aux bookmarks (enregistrer)
+  const bookmarkPost = async (postId: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Non authentifié');
       }
 
-      const response = await fetch(`http://localhost:8081/posts/${postId}/favorite`, {
+      console.log(`[bookmarkPost] POST /posts/${postId}/bookmark`);
+      const response = await fetch(`http://localhost:8081/posts/${postId}/bookmark`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -287,22 +300,25 @@ const Home = () => {
         throw new Error(errorData?.message || `Erreur ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log(`[bookmarkPost] Résultat:`, result);
+      return result;
     } catch (error) {
-      console.error('Erreur lors de l\'ajout aux favoris:', error);
+      console.error('Erreur lors de l\'ajout aux bookmarks:', error);
       throw error;
     }
   };
 
-  // Fonction pour retirer un post des favoris
-  const unfavoritePost = async (postId: string) => {
+  // ✅ Fonction pour retirer un post des bookmarks
+  const unbookmarkPost = async (postId: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Non authentifié');
       }
 
-      const response = await fetch(`http://localhost:8081/posts/${postId}/favorite`, {
+      console.log(`[unbookmarkPost] DELETE /posts/${postId}/bookmark`);
+      const response = await fetch(`http://localhost:8081/posts/${postId}/bookmark`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -315,9 +331,10 @@ const Home = () => {
       }
 
       // La réponse est vide avec un statut 204
+      console.log(`[unbookmarkPost] Bookmark retiré avec succès`);
       return true;
     } catch (error) {
-      console.error('Erreur lors du retrait des favoris:', error);
+      console.error('Erreur lors du retrait des bookmarks:', error);
       throw error;
     }
   };
@@ -375,7 +392,7 @@ const Home = () => {
         const postStatesFromAPI = data.posts.map(post => {
           // Convertir explicitement en booléen pour éviter les problèmes de type
           const isLiked = post.likedByCurrentUser === true;
-          const isSaved = post.favoritedByCurrentUser === true;
+          const isSaved = post.bookmarkedByCurrentUser === true; // ✅ Utiliser bookmarkedByCurrentUser pour les enregistrements
 
 
           return {
@@ -553,18 +570,18 @@ const Home = () => {
     if (!post || savingPosts[post.id]) return; // Éviter les clics multiples
 
     try {
-      // Récupérer l'état actuel du favori avant toute modification
+      // Récupérer l'état actuel du bookmark avant toute modification
       const currentlySaved = postStates[index].saved;
-      // console.log(`Toggle favori pour le post ${post.id} - État actuel: ${currentlySaved ? 'favori' : 'non favori'}`);
+      console.log(`[toggleSave] Post ${post.id} - État actuel: ${currentlySaved ? 'enregistré' : 'non enregistré'}`);
 
-      // Marquer ce post comme en cours de favorite/unfavorite
+      // Marquer ce post comme en cours de bookmark/unbookmark
       setSavingPosts(prev => ({ ...prev, [post.id]: true }));
 
       // Mise à jour optimiste de l'UI
       setPostStates((prev) => {
         const next = [...prev];
         const newSavedState = !currentlySaved;
-        // console.log(`Mise à jour optimiste: ${currentlySaved ? 'favori' : 'non favori'} -> ${newSavedState ? 'favori' : 'non favori'}`);
+        console.log(`[toggleSave] Mise à jour optimiste: ${currentlySaved ? 'enregistré' : 'non enregistré'} -> ${newSavedState ? 'enregistré' : 'non enregistré'}`);
 
         next[index] = {
           ...next[index],
@@ -575,16 +592,16 @@ const Home = () => {
 
       // Appel à l'API
       if (currentlySaved) {
-        // Le post était déjà en favori, on le retire
-        // console.log(`Appel API: unfavorite post ${post.id}`);
-        await unfavoritePost(post.id);
+        // Le post était déjà enregistré, on le retire
+        console.log(`[toggleSave] Appel DELETE /posts/${post.id}/bookmark`);
+        await unbookmarkPost(post.id);
       } else {
-        // Le post n'était pas en favori, on l'ajoute
-        // console.log(`Appel API: favorite post ${post.id}`);
-        await favoritePost(post.id);
+        // Le post n'était pas enregistré, on l'ajoute
+        console.log(`[toggleSave] Appel POST /posts/${post.id}/bookmark`);
+        await bookmarkPost(post.id);
       }
     } catch (error) {
-      console.error('Erreur lors du toggle favori:', error);
+      console.error('Erreur lors du toggle bookmark:', error);
 
       // En cas d'erreur, annuler la mise à jour optimiste
       setPostStates((prev) => {
@@ -600,7 +617,7 @@ const Home = () => {
       // Afficher un message d'erreur
       toast({
         title: "Erreur",
-        description: "Impossible de modifier le favori",
+        description: "Impossible de modifier l'enregistrement",
         variant: "destructive"
       });
     } finally {
@@ -624,14 +641,14 @@ const Home = () => {
           if (response.ok) {
             const updatedPost = await response.json();
             // console.log('Post mis à jour depuis l\'API:', updatedPost);
-            // console.log(`État du favori: ${updatedPost.favoritedByCurrentUser ? 'favori' : 'non favori'}`);
+            // console.log(`État du bookmark: ${updatedPost.bookmarkedByCurrentUser ? 'enregistré' : 'non enregistré'}`);
 
             // Mettre à jour l'état du post avec les données fraîches
             setPostStates(prev => {
               const next = [...prev];
               next[index] = {
                 ...next[index],
-                saved: updatedPost.favoritedByCurrentUser === true
+                saved: updatedPost.bookmarkedByCurrentUser === true // ✅ Utiliser bookmarkedByCurrentUser
               };
               return next;
             });
@@ -903,7 +920,7 @@ const Home = () => {
                     // Ajouter les états des nouveaux posts
                     setPostStates(prev => [...prev, ...data.posts.map(post => ({
                       liked: post.likedByCurrentUser === true,
-                      saved: post.favoritedByCurrentUser === true,
+                      saved: post.bookmarkedByCurrentUser === true,
                       likes: post.likeCount || 0
                     }))]);
                   } catch (error) {

@@ -4,6 +4,7 @@ import RightBar from "@/components/RightBar";
 import { useState, useEffect } from "react";
 import PostWithComments from "@/components/PostWithComments";
 import { postService } from "@/services/postService";
+import { bookmarkService } from "@/services/bookmarkService"; // ✅ AJOUT
 import type { PostResponse, Comment } from "@/types/post";
 
 const ProfilePost = () => {
@@ -79,21 +80,21 @@ const ProfilePost = () => {
         try {
             setIsSaving(true);
 
-            if (post.favoritedByCurrentUser) {
-                await postService.unfavoritePost(postId);
+            if (post.bookmarkedByCurrentUser) {
+                await bookmarkService.unbookmarkPost(postId);
             } else {
-                await postService.favoritePost(postId);
+                await bookmarkService.bookmarkPost(postId);
             }
 
             setPost(prev => {
                 if (!prev) return null;
                 return {
                     ...prev,
-                    favoritedByCurrentUser: !prev.favoritedByCurrentUser
+                    bookmarkedByCurrentUser: !prev.bookmarkedByCurrentUser
                 };
             });
         } catch (error) {
-            console.error('Error toggling favorite:', error);
+            console.error('Error toggling bookmark:', error);
         } finally {
             setIsSaving(false);
         }
@@ -213,7 +214,7 @@ const ProfilePost = () => {
                             }}
                             postState={{
                                 liked: post.likedByCurrentUser,
-                                saved: post.favoritedByCurrentUser,
+                                saved: post.bookmarkedByCurrentUser,
                                 likes: post.likeCount
                             }}
                             postIndex={0}
